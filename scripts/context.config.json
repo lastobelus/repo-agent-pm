@@ -1,0 +1,18 @@
+{
+  "implement": [
+    "AGENTS.md",
+    "docs/ai/playbooks/todo-implementer.md",
+    "docs/process/git-workflow.md",
+    "docs/specs/pending/"
+  ],
+  "land": [
+    "AGENTS.md",
+    "docs/ai/playbooks/finish-and-land.md",
+    "docs/process/TODO.md"
+  ],
+  "process": [
+    "AGENTS.md",
+    "docs/ai/playbooks/todo-processor.md",
+    "docs/process/TODO.md"
+  ]
+}
