@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+SRC_DIR="$ROOT_DIR/.kit/local-exchange"
+
+if [ ! -d "$SRC_DIR" ]; then
+  echo "Error: Missing local-exchange kit files at $SRC_DIR" >&2
+  exit 1
+fi
+
+copy_if_missing() {
+  local src="$1"
+  local dst="$2"
+
+  if [ -e "$dst" ]; then
+    echo "Skip (exists): $dst"
+    return
+  fi
+
+  mkdir -p "$(dirname "$dst")"
+  cp "$src" "$dst"
+  echo "Installed: $dst"
+}
+
+copy_if_missing "$SRC_DIR/docs/process/local-exchange.md" "$ROOT_DIR/docs/process/local-exchange.md"
+copy_if_missing "$SRC_DIR/scripts/setup-exchange.sh" "$ROOT_DIR/scripts/setup-exchange.sh"
+copy_if_missing "$SRC_DIR/scripts/gitx-wrapper.sh" "$ROOT_DIR/scripts/gitx-wrapper.sh"
+
+chmod 755 "$ROOT_DIR/scripts/setup-exchange.sh" || true
+chmod 755 "$ROOT_DIR/scripts/gitx-wrapper.sh" || true
+
+echo ""
+echo "Local Exchange files installed."
+echo "Next: run ./scripts/setup-exchange.sh from your wrapper root (where slot clones live)."
+

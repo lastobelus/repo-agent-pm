@@ -1,0 +1,209 @@
+#!/bin/bash
+# Usage: ./scripts/run-prompt.sh <task_name>
+# Example: ./scripts/run-prompt.sh implement
+
+set -euo pipefail
+
+TASK="${1:-}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+CONFIG="$ROOT_DIR/scripts/context.config.yaml"
+
+if [ -z "$TASK" ]; then
+  echo "Usage: $0 <name>" >&2
+  echo "  Looks for docs/ai/prompts/<name>.md or docs/ai/playbooks/<name>.md" >&2
+  exit 1
+fi
+
+if [ ! -f "$CONFIG" ]; then
+  echo "Error: Missing config file: $CONFIG" >&2
+  exit 1
+fi
+
+TASK_FILE=""
+if [ -f "$ROOT_DIR/docs/ai/prompts/$TASK.md" ]; then
+  TASK_FILE="$ROOT_DIR/docs/ai/prompts/$TASK.md"
+elif [ -f "$ROOT_DIR/docs/ai/playbooks/$TASK.md" ]; then
+  TASK_FILE="$ROOT_DIR/docs/ai/playbooks/$TASK.md"
+elif [ -f "$ROOT_DIR/docs/ai/instructions/$TASK.md" ]; then
+  TASK_FILE="$ROOT_DIR/docs/ai/instructions/$TASK.md"
+else
+  echo "Error: Unknown name '$TASK'." >&2
+  exit 1
+fi
+
+TASK_FILE_REF="$TASK_FILE"
+if [[ "$TASK_FILE" == "$ROOT_DIR/"* ]]; then
+  TASK_FILE_REF="${TASK_FILE#$ROOT_DIR/}"
+fi
+
+frontmatter_list() {
+  local file="$1"
+  local key="$2"
+  awk -v want="$key" '
+    function trim(s) { sub(/^[ \t\r\n]+/, "", s); sub(/[ \t\r\n]+$/, "", s); return s }
+    NR==1 { if ($0 != "---") { exit 0 } in_fm=1; next }
+    in_fm && $0 == "---" { exit 0 }
+    in_fm {
+      if ($0 ~ /^[A-Za-z0-9_-]+:[[:space:]]*$/) {
+        cur=$0
+        sub(/:[[:space:]]*$/, "", cur)
+        collect = (cur == want)
+        next
+      }
+      if (collect && $0 ~ /^[[:space:]]*-[[:space:]]+/) {
+        line=$0
+        sub(/^[[:space:]]*-[[:space:]]+/, "", line)
+        print trim(line)
+      }
+    }
+  ' "$file" 2>/dev/null || true
+}
+
+frontmatter_scalar() {
+  local file="$1"
+  local key="$2"
+  awk -v want="$key" '
+    function trim(s) { sub(/^[ \t\r\n]+/, "", s); sub(/[ \t\r\n]+$/, "", s); return s }
+    NR==1 { if ($0 != "---") { exit 0 } in_fm=1; next }
+    in_fm && $0 == "---" { exit 0 }
+    in_fm {
+      # scalar line: key: value
+      if ($0 ~ "^"want":[[:space:]]*") {
+        line=$0
+        sub("^"want":[[:space:]]*", "", line)
+        print trim(line)
+        exit 0
+      }
+    }
+  ' "$file" 2>/dev/null || true
+}
+
+cat_body() {
+  local file="$1"
+  awk '
+    NR==1 && $0=="---" { in_fm=1; next }
+    in_fm && $0=="---" { in_fm=0; next }
+    !in_fm { print }
+  ' "$file"
+}
+
+yaml_list_top() {
+  local file="$1"
+  local key="$2"
+  awk -v want="$key" '
+    function trim(s) { sub(/^[ \t\r\n]+/, "", s); sub(/[ \t\r\n]+$/, "", s); return s }
+    /^[[:space:]]*#/ { next }
+    /^[[:space:]]*$/ { next }
+    $0 ~ "^"want":[[:space:]]*$" { in_list=1; next }
+    in_list {
+      if ($0 ~ /^[A-Za-z0-9_-]+:[[:space:]]*$/) { exit }
+      if ($0 ~ /^[[:space:]]*-[[:space:]]+/) {
+        line=$0
+        sub(/^[[:space:]]*-[[:space:]]+/, "", line)
+        print trim(line)
+      }
+    }
+  ' "$file" 2>/dev/null || true
+}
+
+yaml_list_task() {
+  local file="$1"
+  local task="$2"
+  awk -v want="$task" '
+    function trim(s) { sub(/^[ \t\r\n]+/, "", s); sub(/[ \t\r\n]+$/, "", s); return s }
+    /^[[:space:]]*#/ { next }
+    /^[[:space:]]*$/ { next }
+    /^task_inputs:[[:space:]]*$/ { in_section=1; next }
+    in_section && /^[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      cur=trim($0)
+      sub(/:[[:space:]]*$/, "", cur)
+      in_task = (cur == want)
+      next
+    }
+    in_task && /^[[:space:]]*-[[:space:]]+/ {
+      line=$0
+      sub(/^[[:space:]]*-[[:space:]]+/, "", line)
+      print trim(line)
+    }
+  ' "$file" 2>/dev/null || true
+}
+
+ALL_INPUTS=""
+
+# Always print the selected prompt/playbook/procedure first.
+ALL_INPUTS="$ALL_INPUTS$TASK_FILE_REF\n"
+
+# Baseline inputs declared in the prompt/playbook frontmatter.
+ALL_INPUTS="$ALL_INPUTS$(frontmatter_list "$TASK_FILE" inputs)\n"
+
+# Project-level additions.
+ALL_INPUTS="$ALL_INPUTS$(yaml_list_top "$CONFIG" instructions)\n"
+ALL_INPUTS="$ALL_INPUTS$(yaml_list_top "$CONFIG" global_inputs)\n"
+ALL_INPUTS="$ALL_INPUTS$(yaml_list_task "$CONFIG" "$TASK")\n"
+
+DEDUPED=$(printf "%b" "$ALL_INPUTS" | awk 'NF && !seen[$0]++')
+
+echo ""
+echo ""
+
+while IFS= read -r file; do
+  # Resolve relative paths against the project root.
+  if [[ "$file" != /* ]]; then
+    file="$ROOT_DIR/$file"
+  fi
+
+  display="$file"
+  if [[ "$file" == "$ROOT_DIR/"* ]]; then
+    display="${file#$ROOT_DIR/}"
+  fi
+
+  if [ -d "$file" ]; then
+    # If it's a directory, concat all markdown files inside
+    if compgen -G "$file/*.md" > /dev/null; then
+      for f in "$file"/*.md; do
+        f_display="$f"
+        if [[ "$f" == "$ROOT_DIR/"* ]]; then
+          f_display="${f#$ROOT_DIR/}"
+        fi
+
+        kind=$(frontmatter_scalar "$f" kind)
+        mode=$(frontmatter_scalar "$f" mode)
+        name=$(frontmatter_scalar "$f" name)
+
+        meta=""
+        if [ -n "$kind" ] || [ -n "$mode" ] || [ -n "$name" ]; then
+          meta=" (kind=${kind:-?} mode=${mode:-?} name=${name:-?})"
+        fi
+        echo "---"
+        echo "File: $f_display$meta"
+        echo "---"
+        cat_body "$f"
+        echo ""
+      done
+    else
+      echo "---"
+      echo "Dir:  $file (no .md files)"
+      echo "---"
+      echo ""
+    fi
+  elif [ -f "$file" ]; then
+    kind=$(frontmatter_scalar "$file" kind)
+    mode=$(frontmatter_scalar "$file" mode)
+    name=$(frontmatter_scalar "$file" name)
+
+    meta=""
+    if [ -n "$kind" ] || [ -n "$mode" ] || [ -n "$name" ]; then
+      meta=" (kind=${kind:-?} mode=${mode:-?} name=${name:-?})"
+    fi
+    echo "---"
+    echo "File: $display$meta"
+    echo "---"
+    cat_body "$file"
+    echo ""
+  else
+    echo "Warning: $file not found." >&2
+  fi
+done <<< "$DEDUPED"

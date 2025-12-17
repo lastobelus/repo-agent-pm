@@ -1,0 +1,18 @@
+# Project-specific extra inputs for prompts/playbooks.
+#
+# The kit ships prompt/playbook definitions under `docs/ai/` with YAML frontmatter
+# that declares their baseline `inputs:`.
+#
+# This config file starts empty in a fresh install. Add items here to include
+# additional project context without editing kit prompt files.
+
+instructions:
+  # - docs/ai/instructions/context-strategy.md
+
+global_inputs:
+  # - README.md
+
+# Per-task extra inputs. Keys match the name you pass to `scripts/run-prompt.sh`.
+task_inputs:
+  # implement:
+  #   - lib/

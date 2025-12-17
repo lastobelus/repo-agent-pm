@@ -7,18 +7,34 @@ Your product is **The Kit**—a redistributable set of scripts, documentation, a
 ## The Architecture
 This repo is a **Template Generator**. We do not build an app here; we build the tools that help *others* build apps.
 
-- **`scaffold-project.py`**: The Installer. It packages the files below and writes them to a target project.
-- **`docs/process/`**: The Reference Documentation. These files (`bus-factor.md`, `local-exchange.md`) are the "payload" delivered to the user.
-- **`scripts/`**: The Tooling Payload. Scripts like `setup-exchange.sh` that get installed into the user's repo.
-- **`AGENTS-additions.md`**: The **Agent Rules Export**. This file contains the instructions that the *consumer's agents* need to understand our process.
+- **`scaffold-project.py`**: The Installer. It copies `payload/` into a target project.
+- **`payload/docs/`**: The Reference Documentation + playbooks installed into the consumer project as `docs/`.
+- **`payload/scripts/`**: The Tooling payload installed into the consumer project as `scripts/`.
+- **`payload/AGENTS-additions.md`**: The **Agent Rules Export**. On install, it is appended to the target’s `AGENTS.md` (or used to create one if missing) and then removed by default.
+- **`payload/test/support/feedback/.keep`**: Ensures the feedback inbox exists in fresh installs.
+
+## Documentation Discipline (Meta)
+
+This repository has two distinct kinds of documentation:
+
+1. **Kit maintainer docs** (this repo):
+   - Lives under `docs/`
+   - Explains how to evolve the kit itself
+2. **Consumer process docs** (installed into target projects):
+   - Lives under `payload/docs/` and `payload/scripts/`
+   - Explains how to *use* the process in a target repo
+
+Rule: any refactor or process refinement must update both maintainer docs (as needed) and the installed consumer docs (as needed).
+
+Prefer `README.md` files inside installed folders (`payload/docs/**/README.md`) for consumer-facing navigation.
 
 ## Workflows
 
 ### 1. Adding a Process Feature
 If you add a new capability (e.g., "The Forensic Agent"):
-1.  **Create the Artifacts**: Write the playbook in `docs/ai/playbooks/` or the explainer in `docs/process/`.
-2.  **Update the Installer**: You **MUST** update `scaffold-project.py` to include the new file in the installation manifest. If it's not in the Python script, it doesn't exist for the user.
-3.  **Update the Rules**: Add the relevant agent instructions to `AGENTS-additions.md`.
+1.  **Create the Artifacts**: Write the playbook in `payload/docs/ai/playbooks/` or the explainer in `payload/docs/process/`.
+2.  **Update the Installer**: Ensure `scaffold-project.py` copies the new file (anything under `payload/` is installed).
+3.  **Update the Rules**: Add relevant agent instructions to `payload/AGENTS-additions.md`.
 
 ### 2. Updating `AGENTS-additions.md`
 This file is a "partial". It is meant to be appended to an existing `AGENTS.md` in the user's project.
@@ -30,9 +46,9 @@ This file is a "partial". It is meant to be appended to an existing `AGENTS.md` 
 Often, we iterate on the process inside a real app (the "Consumer") and then fold it back here.
 - **Input**: A set of modified scripts or docs from a consumer project.
 - **Task**:
-    1.  Overwrite the local versions in `docs/` or `scripts/`.
-    2.  Check if `AGENTS-additions.md` needs to change based on what we learned in the field.
-    3.  Regenerate the `scaffold-project.py` logic to reflect any file path changes.
+    1.  Overwrite the local versions in `payload/docs/` or `payload/scripts/`.
+    2.  Check if `payload/AGENTS-additions.md` needs to change based on what we learned in the field.
+    3.  Verify `scaffold-project.py` still installs everything expected.
 
 ## Definition of Done
 A feature in this repo is only "Done" when:

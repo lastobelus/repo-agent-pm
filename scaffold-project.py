@@ -1,235 +1,167 @@
+import argparse
 import os
-import json
+import shutil
+import stat
 
-# Define the file structure and contents
-files = {
-    "AGENTS.md": """# AGENTS.md — Project Instructions
 
-## Context Strategy
-- **Agents must read** `docs/ai/instructions/context-strategy.md` to understand where to find specs.
-- **Agents must use** the playbooks in `docs/ai/playbooks/` for specific tasks.
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+PAYLOAD_DIR = os.path.join(REPO_ROOT, "payload")
 
-## Core Workflows
-1. **Picking a Todo**: Run the `todo-implementer` playbook.
-2. **Finishing a Task**: Run the `finish-and-land` playbook.
-3. **Processing Feedback**: Run the `todo-processor` playbook to triage `docs/process/TODO.md`.
+ADD_MARKER_START = "# --- Process Kit Additions (simple-agentic-process-setup) START ---"
+ADD_MARKER_END = "# --- Process Kit Additions (simple-agentic-process-setup) END ---"
 
-## The "Buffered Integration" Protocol
-- **`main`** is the development trunk.
-- **`stable`** is the deployed demo branch.
-- Agents work on `topic/*` or short-lived feature branches.
-- Feedback arrives as files in `test/support/feedback/` (see `docs/process/ash-roadmap.md`).
-""",
 
-    "docs/ai/instructions/context-strategy.md": """# Context Strategy
+def _copy_tree(src_dir: str, dst_dir: str, *, overwrite: bool) -> set[str]:
+    copied: set[str] = set()
+    for root, dirs, files in os.walk(src_dir):
+        rel_root = os.path.relpath(root, src_dir)
+        dst_root = dst_dir if rel_root == "." else os.path.join(dst_dir, rel_root)
+        os.makedirs(dst_root, exist_ok=True)
 
-When working on this project, look for specifications in these specific folders:
+        for directory in dirs:
+            os.makedirs(os.path.join(dst_root, directory), exist_ok=True)
 
-1.  **`docs/specs/implemented/`**: Features that are already done. Treat these as the "Source of Truth" for existing behavior.
-2.  **`docs/specs/pending/`**: Approved specs that are ready to be implemented.
-3.  **`docs/specs/drafts/`**: Rough ideas. **Ignore these** when coding unless explicitly instructed to "work on a draft."
+        for filename in files:
+            src_path = os.path.join(root, filename)
+            dst_path = os.path.join(dst_root, filename)
 
-## Scripts
-Use `scripts/run-prompt.sh <task_name>` to automatically load the relevant specs for your current task.
-""",
+            os.makedirs(os.path.dirname(dst_path), exist_ok=True)
 
-    "docs/ai/playbooks/finish-and-land.md": """# Finish and Land Playbook
+            if (not overwrite) and os.path.exists(dst_path):
+                continue
+            shutil.copy2(src_path, dst_path)
+            rel_dst = os.path.relpath(dst_path, dst_dir)
+            copied.add(rel_dst)
 
-**Role:** Closer Agent
-**Goal:** Safely land the current feature branch into `main` and update the Todo list.
+            try:
+                src_mode = os.stat(src_path).st_mode
+                os.chmod(dst_path, stat.S_IMODE(src_mode))
+            except OSError:
+                pass
 
-## 1. Verification
-- Run the full test suite: `mix test`.
-- Ensure `git status` shows the working tree is clean (except for the Todo update below).
+    return copied
 
-## 2. Bookkeeping (Critical)
-1.  **Identify the Implementation Commit**: Get the short SHA of the commit you just made to implement the code.
-    - `git rev-parse --short HEAD`
-2.  **Update `docs/process/TODO.md`**:
-    - Find the item you are working on.
-    - Change `[ ]` to `[x]`.
-    - Append `#done/<implementation_sha>` to the end of the line.
-    - *Example:* `- [x] Fix login bug #a1b2c3 #done/9z8y7x`
 
-## 3. Committing the Bookkeeping
-- Commit the change to `docs/process/TODO.md`:
-    - `git add docs/process/TODO.md`
-    - `git commit -m "docs: mark <task> as done"`
+def install_payload(target_dir: str) -> None:
+    if not os.path.isdir(PAYLOAD_DIR):
+        raise RuntimeError(f"Missing payload directory: {PAYLOAD_DIR}")
 
-## 4. Landing
-- Push the feature branch.
-- If you have permissions, merge to `main`.
-- If not, request human review.
-""",
+    os.makedirs(target_dir, exist_ok=True)
 
-    "docs/ai/playbooks/todo-implementer.md": """# Todo Implementer
+    payload_additions_src = os.path.join(PAYLOAD_DIR, "AGENTS-additions.md")
+    payload_additions_content: str | None = None
+    if os.path.isfile(payload_additions_src):
+        with open(payload_additions_src, "r") as f:
+            payload_additions_content = f.read().rstrip() + "\n"
 
-**Role:** Coding Agent
-**Input:** A single item from `docs/process/TODO.md` (Approved section).
+    copied = _copy_tree(PAYLOAD_DIR, target_dir, overwrite=False)
+    print("Installed: payload/*")
 
-## Protocol
-1.  **Read Context**: Check `docs/specs/pending` for any relevant specs.
-2.  **Branch**: Create a branch `topic/<task-slug>`.
-3.  **Implement**: Write code + tests.
-4.  **Verify**: Run `mix test`.
-5.  **Commit**: Use Conventional Commits (`feat: ...`, `fix: ...`).
-6.  **Handover**: Instruct the user to run the `finish-and-land` playbook.
-""",
+    agents_md_dst = os.path.join(target_dir, "AGENTS.md")
+    additions_src = os.path.join(target_dir, "AGENTS-additions.md")
 
-    "docs/ai/playbooks/todo-processor.md": """# Todo Processor
+    if not os.path.isfile(additions_src):
+        return
 
-**Role:** Manager Agent
-**Goal:** Triage the `Inbox` and `Review` sections of `docs/process/TODO.md`.
+    with open(additions_src, "r") as f:
+        additions = f.read().rstrip() + "\n"
 
-## Workflow
-1.  **Inbox**: Read new items.
-    - If it's a bug report from `test/support/feedback/`, analyze the `trace.json` (see `docs/process/ash-roadmap.md`).
-    - Move to **Review** or **Approved**.
-2.  **Review**:
-    - If a task is blocked, move to **Future**.
-    - If a task is ready for an agent, move to **Approved**.
-3.  **Tagging**: Ensure every line has an origin SHA tag (`#<sha>`) if it's missing.
-""",
+    wrapped_additions = (
+        f"{ADD_MARKER_START}\n" f"{additions}" f"{ADD_MARKER_END}\n"
+    )
 
-    "docs/process/TODO.md": """# Project Coordination
+    applied = False
 
-## Inbox (New Feedback)
-## Review (Pending Human Approval)
+    if not os.path.isfile(agents_md_dst):
+        with open(agents_md_dst, "w") as f:
+            f.write(additions)
+        print("Created: AGENTS.md from AGENTS-additions.md")
+        applied = True
+    else:
+        with open(agents_md_dst, "r") as f:
+            existing = f.read()
 
-## Approved (Queue for Agents)
-- [ ] Initial project scaffold setup #init
+        if (ADD_MARKER_START in existing) or (ADD_MARKER_END in existing):
+            print("Skipped: AGENTS-additions.md already applied")
+            applied = True
+        else:
+            with open(agents_md_dst, "a") as f:
+                if not existing.endswith("\n"):
+                    f.write("\n")
+                f.write("\n")
+                f.write(wrapped_additions)
+            print("Appended: AGENTS-additions.md to AGENTS.md")
+            applied = True
 
-## Future / Icebox
+    if (not applied) or os.path.basename(additions_src) != "AGENTS-additions.md":
+        return
 
-## Finished (History)
-""",
+    if os.path.isfile(additions_src):
+        safe_to_delete = False
+        if "AGENTS-additions.md" in copied:
+            safe_to_delete = True
+        elif (payload_additions_content is not None) and (additions == payload_additions_content):
+            safe_to_delete = True
 
-    "docs/process/git-workflow.md": """# Git Workflow: Buffered Integration
+        if safe_to_delete:
+            os.remove(additions_src)
+            print("Deleted: AGENTS-additions.md (merged into AGENTS.md)")
+        else:
+            print(
+                "Kept: AGENTS-additions.md (differs from kit payload; not auto-deleting)"
+            )
 
-## Branches
-- **`stable`**: Production/Demo. Only merges from `main` when manually released.
-- **`main`**: Development trunk.
-- **`topic/*`**: Agent workspaces.
+    for rel_script in [
+        "scripts/run-prompt.sh",
+        "scripts/install-local-exchange.sh",
+        "scripts/setup-exchange.sh",
+        "scripts/gitx-wrapper.sh",
+    ]:
+        script_path = os.path.join(target_dir, rel_script)
+        if os.path.isfile(script_path):
+            os.chmod(script_path, 0o755)
+            print(f"Made executable: {rel_script}")
 
-## The Feedback Loop
-1. User reports issue in Demo App.
-2. App commits `report.yaml` and `trace.json` to `test/support/feedback/` via GitHub API.
-3. **Forensic Agent** picks up the file, analyzes the Ash Event trace, and adds a coherent Todo item to `docs/process/TODO.md`.
-""",
 
-    "docs/process/ash-roadmap.md": """# Ash Events Roadmap
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Install the Process Kit payload into a target project directory."
+    )
+    parser.add_argument("target", help="Target directory to install into.")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Allow installing into a directory that already contains 'payload/'.",
+    )
+    parser.add_argument(
+        "--keep-additions",
+        action="store_true",
+        help="Keep AGENTS-additions.md in the target directory after applying.",
+    )
+    args = parser.parse_args()
 
-## Phase 1: The Black Box (Current)
-- **Goal:** Ingest user reports as files in the repo.
-- **Action:**
-    - Use Ash Events in `audit` mode.
-    - Serialize trace to JSON.
-    - Commit to `test/support/feedback/<id>/trace.json`.
+    target_dir = os.path.abspath(args.target)
+    if (not args.force) and os.path.isdir(os.path.join(target_dir, "payload")):
+        raise RuntimeError(
+            "Refusing to install into a directory that already contains a 'payload/' folder. "
+            "Pick a target project directory (not the kit repo root), or pass --force."
+        )
 
-## Phase 2: The Replay (Next)
-- **Goal:** Turn reports into regression tests.
-- **Action:**
-    - Create a "Replay Test" helper in Elixir.
-    - Agent reads `trace.json` and generates a `test/bugs/issue_<id>_test.exs` file that replays the events.
+    if args.keep_additions:
+        # Install first, then restore the additions file if we delete it.
+        install_payload(target_dir)
+        # If the file was removed by the installer, put it back from the kit payload.
+        payload_additions_src = os.path.join(PAYLOAD_DIR, "AGENTS-additions.md")
+        additions_dst = os.path.join(target_dir, "AGENTS-additions.md")
+        if os.path.isfile(payload_additions_src) and (not os.path.isfile(additions_dst)):
+            shutil.copy2(payload_additions_src, additions_dst)
+            print("Restored: AGENTS-additions.md (--keep-additions)")
+    else:
+        install_payload(target_dir)
+    print("\n✅ Process Kit payload installed.")
+    print("\nOptional next steps:")
+    print("- Local Exchange: ./scripts/run-prompt.sh setup-local-exchange")
 
-## Phase 3: The Flight Recorder (Future)
-- **Goal:** Full visual replay.
-- **Action:** Rehydrate the state from events to show the developer exactly what the user saw.
-""",
-
-    "scripts/context.config.json": json.dumps({
-        "implement": [
-            "AGENTS.md",
-            "docs/ai/playbooks/todo-implementer.md",
-            "docs/process/git-workflow.md",
-            "docs/specs/pending/"
-        ],
-        "land": [
-            "AGENTS.md",
-            "docs/ai/playbooks/finish-and-land.md",
-            "docs/process/TODO.md"
-        ],
-        "process": [
-            "AGENTS.md",
-            "docs/ai/playbooks/todo-processor.md",
-            "docs/process/TODO.md"
-        ]
-    }, indent=2),
-
-    "scripts/run-prompt.sh": """#!/bin/bash
-# Usage: ./scripts/run-prompt.sh <task_name>
-# Example: ./scripts/run-prompt.sh implement
-
-TASK=$1
-CONFIG="scripts/context.config.json"
-
-if [ -z "$TASK" ]; then
-  echo "Usage: $0 <task_name>"
-  exit 1
-fi
-
-# Extract files list using python (standard on macos) to parse json
-FILES=$(python3 -c "import sys, json; print(' '.join(json.load(open('$CONFIG'))['$TASK']))" 2>/dev/null)
-
-if [ -z "$FILES" ]; then
-  echo "Error: Task '$TASK' not found in $CONFIG"
-  exit 1
-fi
-
-echo ""
-echo ""
-
-for file in $FILES; do
-  if [ -d "$file" ]; then
-    # If it's a directory, concat all markdown files inside
-    for f in "$file"/*.md; do
-      echo "---"
-      echo "File: $f"
-      echo "---"
-      cat "$f"
-      echo ""
-    done
-  elif [ -f "$file" ]; then
-    echo "---"
-    echo "File: $file"
-    echo "---"
-    cat "$file"
-    echo ""
-  else
-    echo "Warning: $file not found." >&2
-  fi
-done
-"""
-}
-
-def create_project_structure():
-    for path, content in files.items():
-        # Handle directory creation
-        directory = os.path.dirname(path)
-        if directory and not os.path.exists(directory):
-            os.makedirs(directory)
-
-        # Write the file
-        with open(path, "w") as f:
-            f.write(content)
-            print(f"Created: {path}")
-
-    # Create empty spec directories to ensure structure exists
-    dirs = [
-        "docs/specs/implemented",
-        "docs/specs/pending",
-        "docs/specs/drafts",
-        "test/support/feedback"
-    ]
-    for d in dirs:
-        if not os.path.exists(d):
-            os.makedirs(d)
-            print(f"Created directory: {d}")
-
-    # Make script executable
-    os.chmod("scripts/run-prompt.sh", 0o755)
-    print("Made scripts/run-prompt.sh executable")
 
 if __name__ == "__main__":
-    create_project_structure()
-    print("\\n✅ Project scaffold complete.")
+    main()
