@@ -31,3 +31,14 @@ This process assumes multiple agents may edit `docs/process/TODO.md` concurrentl
 - edits are line-oriented
 - `#<shortsha>` and `#done/<shortsha>` tags are treated as persistent
 - branches are rebased/fast-forwarded frequently
+
+### Why this works (practitioner note)
+
+In real multi-agent use (e.g. 2 concurrent “todo implementer” loops plus an interactive feature session), you may still see occasional conflicts.
+
+The reason conflicts are usually manageable:
+
+- TODO changes are mechanically simple (move/mark/add lines).
+- The file is “hot”, so agents tend to rebase frequently and land small slices.
+
+Worst case, a todo item gets re-run from scratch once in a while. The workflow is designed so that outcome is low-cost.
