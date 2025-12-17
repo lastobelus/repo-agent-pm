@@ -2,6 +2,14 @@
 
 This folder contains the core process artifacts that coordinate work between a human operator and multiple CLI agents.
 
+## Current Scope (Temporary)
+
+This kit is currently optimized for **new Phoenix/Elixir/Ash projects**. Some playbooks assume:
+
+- tests are run with `mix test`
+- trunk branch is `main`
+- agent branches are `topic/*`
+
 ## The TODO Checkpoint
 
 The coordination “nervous system” is `docs/process/TODO.md`.
@@ -23,6 +31,17 @@ It stays workable because:
 - Agents frequently fast-forward/rebase before landing, so TODO drift stays small.
 
 Worst case, an occasional conflict means re-doing one small todo. That’s acceptable because the loop is optimized for atomic, small tasks.
+
+## Adding Todos (Origin Tags)
+
+When adding new todos, you can either:
+
+- add them quickly (without origin tags) and let the `todo-processor` session attach missing tags later, **as long as the new todos remain in `Inbox` until tagged**, or
+- use the clean-context prompt that produces stable origin tags via a two-step doc commit:
+
+```bash
+./scripts/run-prompt.sh add-todo
+```
 
 ## Reducing TODO Conflicts (Optional)
 

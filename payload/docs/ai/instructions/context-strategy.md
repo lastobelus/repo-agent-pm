@@ -6,6 +6,12 @@ name: context-strategy
 
 # Context Strategy
 
+## Current Scope (Temporary)
+
+This kit is currently optimized for **new Phoenix/Elixir/Ash projects**. Expect conventions like `mix test` in playbooks.
+
+If you are working in a different stack, stop and ask the human how to adapt verification commands and folder conventions.
+
 When working on this project, look for specifications in these specific folders:
 
 1.  **`docs/specs/implemented/`**: Features that are already done. Treat these as the "Source of Truth" for existing behavior.
@@ -17,6 +23,7 @@ Use `scripts/run-prompt.sh <task_name>` to automatically load the relevant specs
 
 Common names:
 
+- `add-todo` (clean-context add todos + origin tags)
 - `implement` (clean-context todo implementer)
 - `land` (clean-context closer)
 - `process` (clean-context triage)
