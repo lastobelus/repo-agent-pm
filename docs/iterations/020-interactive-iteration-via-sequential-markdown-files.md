@@ -6,11 +6,21 @@ Goal: make it easy to work in small chunks, preserve rationale, and enable a cle
 
 ## The Core Pattern
 
-1. Create a numbered iteration doc (e.g. `docs/001-...md`).
-2. Paste feedback as quoted blocks (`> ...`).
-3. Respond inline under each quote.
-4. Add explicit action items as **Agent Action** blocks.
-5. When a new round begins, write a new file (e.g. `docs/002-...md`) that summarizes the *current truth* and adds new actions.
+1. #humans a numbered iteration doc (e.g. `docs/001-...md`).
+	- initial version reads like a spec
+	- mix & match markdown headings, plaintext & rough bullet-points
+2.  feedback as quoted blocks (`> ...`). (we did this in the first document, but not subsequently. #discuss)
+	1. Respond inline under each quote 
+3. #humans use #discuss , #question , #advise, #recommend tags to indicate desired feedback from agents
+4. #agents use #recommendation, to indicate recommended courses of action, #decide where #humans need to choose between courses of action, #clarify/intent, #clarify/platform, #clarify/target etc. to indicate areas where #humans need to provide clarification
+5. #humans Add explicit action items as **Agent Action** blocks.
+	1. formalize prompt used to initiate act on action blocks
+	2. consider starting with a terse goal statement, use #goal
+	3. only do one action round trip per markdown, create a new iteration doc for subsequent iteration, containing necessary/new information
+	4. #agents capture what needs to be preserved from interactive discussion about actions in current doc
+	5. #agents summarize what was done in current iteration doc, add new considerations/recommendations/next-steps to a new iteration doc
+	6. #humans potentially re-name/re-number the new iteration doc. Tag current iteration doc #status/finished
+6. When a new round begins, write a new file (e.g. `docs/002-...md`) that summarizes the *current truth* and adds new actions.
 
 This repo currently uses:
 
@@ -93,3 +103,6 @@ This repo used the approach successfully to:
 - make `scripts/run-prompt.sh` parse a tiny YAML subset and dedupe inputs
 - move Local Exchange into `.kit/` as an optional add-on, installed via `scripts/install-local-exchange.sh`
 
+## Obisidan frontmatter
+
+Consider using Obsidian compatible frontmatter to record status etc.

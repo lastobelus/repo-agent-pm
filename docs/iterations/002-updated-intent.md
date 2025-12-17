@@ -1,3 +1,4 @@
+#status/finished
 # Updated Intent (Round 2)
 
 This document records the clarified intent from your annotations in `docs/001-initial-feedback.md`.
@@ -15,8 +16,12 @@ This document records the clarified intent from your annotations in `docs/001-in
 - Process artifacts should be human-readable/editable (Markdown + YAML).
 - If machine tags/ids are needed, they should be attached inline to the relevant line/block (not stored in opaque side files).
 
+---
+
 **Agent Action**: 
 - provide a new prompt in payload called `process-improver` that can be used to improve/iterate-on the process in-project.
+
+---
 
 ### TODO checkpoint stays central
 
@@ -27,18 +32,25 @@ This document records the clarified intent from your annotations in `docs/001-in
   - `#<shortsha>` origin tags and `#done/<shortsha>` completion tags are treated as persistent
   - agents frequently rebase/fast-forward before landing
 
+---
+
 **Agent Action**: 
 - ensure this is appropriately documented for humans and agents working on this project
 - ensure this is appropriately documented in what is installed in target projects
 - meta: add instruction to this project AGENTS.md distinguishing between documentation for humans/agents iterating on the process, and for humans/agents using the process in a target project, and requiring all refactors/refinements etc. to include both types of documentation.
   - prefer `README.md`s in each folder that is installed in target projects, but for documenting the process work itself prefer appropriately named documents in docs/
+---
 
 ### Optional improvement: record base SHA
 
 You liked the idea of recording the base SHA used when an agent starts from `origin/main` (e.g. `#base/<sha>`). This is a good future addition because it makes debugging “worked on stale main” situations much faster.
 
+---
+
 **Agent Action**: 
 - go ahead and add this to the process, with appropriate documentation both in this project and for target projects
+
+---
 ## Local Exchange (Clarifications)
 
 - Local Exchange is not “optional” in the sense that the dashboard requires refs to be pushed there.
@@ -51,9 +63,12 @@ Recommended direction:
 
 See `docs/local-exchange-out-of-band.md`.
 
+---
+
 **Agent Action**: 
 - provide an agent prompt to setup local exchange in a target project (to be run separately from the main install, but the main install should emit a reference to it)
 
+---
 ## Installer Direction
 
 - The static installer should remain the baseline.
@@ -74,6 +89,7 @@ Practical patterns if TODO conflicts get annoying:
 
 This preserves the core “TODO checkpoint” while keeping most high-churn writing out of the shared hotspot.
 
+---
 **Agent Action**: 
 - provide documentation of the idea & suggestions how/when to do it, in `docs/`, & a pointer to that documentation in what is installed in target process (likely the README.md in payload/docs/process)
 - payload/docs organization tweaks:
@@ -81,6 +97,8 @@ This preserves the core “TODO checkpoint” while keeping most high-churn writ
 	- move the `Future` section out of `payload/docs/process/git-workflow.md` and integrate into `payload/docs/process/ash-roadmap.md`
 	- don't add `payload/docs/process/local-exchange.md` with the main installer, but add it with the (new) local-exchange.md setup installer referenced earlier
 	- remove `payload/docs/process/using-gitx-as-a-dashboard`. Add a section to `payload/docs/process/local-exchange.md`  suggesting how the local-exchange setup enables using gitx as a sort of dashboard showing a linear history of what was worked on, with the branch labels acting as pointers to allow a human to quickly view what was done
+
+---
 
 ### YAML preference implemented
 
