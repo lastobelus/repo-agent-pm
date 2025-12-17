@@ -127,7 +127,7 @@ correct, scaffold-project.py got out-of-date in attempting to clumsily iterate o
 I think it might be better to use an agent prompt to do the installation, allowing the opportunity to ask questions of the installing user, and flexibly handle potential conflicts with existing agent instruction in the app being installed to and/or existing project docs/artifacts
 
 **Agent Action**:
-comment on the feasibility of an Agent installer in docs/100-Installation.md
+comment on the feasibility of an Agent installer in docs/iterations/100-Installation.md
 
 
 > **Definition-of-done mismatch:** your maintainer rules say some artifacts are payload, but the installer didn’t actually install all of them (e.g. `bus-factor.md`, `local-exchange.md`, and `AGENTS-additions.md`).

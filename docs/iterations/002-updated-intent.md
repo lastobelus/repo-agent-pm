@@ -1,7 +1,7 @@
 #status/finished
 # Updated Intent (Round 2)
 
-This document records the clarified intent from your annotations in `docs/001-initial-feedback.md`.
+This document records the clarified intent from your annotations in `docs/iterations/001-initial-feedback.md`.
 
 ## Scope (Now)
 
@@ -74,7 +74,7 @@ See `docs/local-exchange-out-of-band.md`.
 - The static installer should remain the baseline.
 - An “agent installer” is feasible and potentially better for interactive reconciliation, but should be added as an optional guided workflow (not the only installation path).
 
-See `docs/100-Installation.md`.
+See `docs/iterations/100-Installation.md`.
 
 ## New Feedback / Recommendations
 

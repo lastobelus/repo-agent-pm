@@ -9,6 +9,10 @@ This repository builds and maintains **The Kit**: a set of process artifacts for
 - Support **concurrent agents** without requiring heavy external PM tooling.
 - Maintain a **stable deployed branch** (`stable`) while development continues on `main`.
 
+## Current Scope (Temporary)
+
+The Kit is currently optimized for **new Phoenix/Elixir/Ash projects**. Once the workflow is proven stable in a few greenfield repos, we can generalize the playbooks (e.g. test command abstraction) for other stacks.
+
 ## The Model
 
 ### Team Shape
@@ -39,4 +43,3 @@ The intent is to preserve the “branches as labels” visualization without pus
 ## What Gets Installed
 
 Everything under `payload/` is what the installer copies into the consumer project.
-

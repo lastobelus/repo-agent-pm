@@ -6,7 +6,7 @@ Goal: make it easy to work in small chunks, preserve rationale, and enable a cle
 
 ## The Core Pattern
 
-1. #humans a numbered iteration doc (e.g. `docs/001-...md`).
+1. #humans a numbered iteration doc (e.g. `docs/iterations/001-...md`).
 	- initial version reads like a spec
 	- mix & match markdown headings, plaintext & rough bullet-points
 2.  feedback as quoted blocks (`> ...`). (we did this in the first document, but not subsequently. #discuss)
@@ -20,12 +20,12 @@ Goal: make it easy to work in small chunks, preserve rationale, and enable a cle
 	4. #agents capture what needs to be preserved from interactive discussion about actions in current doc
 	5. #agents summarize what was done in current iteration doc, add new considerations/recommendations/next-steps to a new iteration doc
 	6. #humans potentially re-name/re-number the new iteration doc. Tag current iteration doc #status/finished
-6. When a new round begins, write a new file (e.g. `docs/002-...md`) that summarizes the *current truth* and adds new actions.
+6. When a new round begins, write a new file (e.g. `docs/iterations/002-...md`) that summarizes the *current truth* and adds new actions.
 
 This repo currently uses:
 
-- `docs/001-initial-feedback.md`
-- `docs/002-updated-intent.md`
+- `docs/iterations/001-initial-feedback.md`
+- `docs/iterations/002-updated-intent.md`
 
 ## Status Lines
 
@@ -106,3 +106,7 @@ This repo used the approach successfully to:
 ## Obisidan frontmatter
 
 Consider using Obsidian compatible frontmatter to record status etc.
+
+#discuss Does this spec belong in this project, or just muddy the waters.
+
+#recommend minimal set of instructions for AGENTS.md or supplemental document referenced by AGENTS.md that would be needed to make this process smooth. It mostly seemed to just happen intuitively so far.
