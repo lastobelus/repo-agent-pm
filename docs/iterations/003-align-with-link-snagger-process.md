@@ -42,7 +42,7 @@ Notable characteristics of that process:
 Partially, but not yet.
 
 What *is* captured in The Kit today:
-- A concept of **clean-context prompts** (`payload/docs/ai/prompts/*`) + a runner (`payload/scripts/run-prompt.sh`).
+- A concept of **clean-context prompts** (`payload/docs/ai/prompts/*`) + a runner (`payload/scripts/run-prompt`).
 - A concept of **todo processing** and **todo implementing** playbooks.
 - A concept of **origin tags** (`#<sha>`) and **completion tags** (`#done/<sha>`).
 

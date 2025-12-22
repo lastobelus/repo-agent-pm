@@ -102,7 +102,7 @@ This preserves the core “TODO checkpoint” while keeping most high-churn writ
 
 ### YAML preference implemented
 
-The prompt context mapping now lives in `payload/scripts/context.config.yaml` and `payload/scripts/run-prompt.sh` parses it without external dependencies.
+The prompt context mapping now lives in `payload/scripts/context.config.yaml` and `payload/scripts/run-prompt` parses it without external dependencies.
 
 ### Prompts vs playbooks
 

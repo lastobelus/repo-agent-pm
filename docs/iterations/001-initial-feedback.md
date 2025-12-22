@@ -97,7 +97,7 @@ correct. What's missing is a top level overview. Below are some notes from the o
 
 ## What It Contains (As Designed)
 
-> **Agent operating model:** a small “human orchestrator + multiple agents” loop, with explicit playbooks in `docs/ai/playbooks/` and a context-loading helper `scripts/run-prompt.sh` driven by `scripts/context.config.yaml`.
+> **Agent operating model:** a small “human orchestrator + multiple agents” loop, with explicit playbooks in `docs/ai/playbooks/` and a context-loading helper `scripts/run-prompt` driven by `scripts/context.config.yaml`.
 
 Response:
 correct.

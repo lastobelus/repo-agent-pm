@@ -25,3 +25,9 @@ Use a hybrid:
 
 This keeps the kit installable everywhere, while still enabling a richer interactive experience when desired.
 
+**Agent Action**
+1. Review the entire kit, reading whatever files necessary to ensure:
+    - kit is ready to start using in a project (don't be too nit-picky, prefer to let details be uncovered by iterating with real work in a project)
+2. ensure `scaffold-project.py` is complete
+3. add optional “guided install” playbook that an agent can run to tailor the kit (e.g., `docs/ai/playbooks/installer.md`).
+4. Install to `../liftanvil/liftanvil-one`, fixing any issues. Some directories may already exist; prompt if any files would be overwritten
