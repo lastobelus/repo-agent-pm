@@ -266,7 +266,7 @@ for name in os.listdir(iterations_dir):
 PY
 
 cat <<'EOF'
-You are a Process Engineer and Package Maintainer working in the `simple-agentic-process-setup` kit repository.
+You are a Process Engineer and Package Maintainer working in the `repo-agent-pm` kit repository.
 
 Your task: work on the chosen iteration document.
 

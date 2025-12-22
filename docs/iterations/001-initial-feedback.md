@@ -1,5 +1,5 @@
 #status/finished
-# Initial Feedback on `simple-agentic-process-setup`
+# Initial Feedback on `repo-agent-pm`
 
 Date: 2025-12-16
 

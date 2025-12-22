@@ -7,8 +7,8 @@ import stat
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 PAYLOAD_DIR = os.path.join(REPO_ROOT, "payload")
 
-ADD_MARKER_START = "# --- Process Kit Additions (simple-agentic-process-setup) START ---"
-ADD_MARKER_END = "# --- Process Kit Additions (simple-agentic-process-setup) END ---"
+ADD_MARKER_START = "# --- Process Kit Additions (repo-agent-pm) START ---"
+ADD_MARKER_END = "# --- Process Kit Additions (repo-agent-pm) END ---"
 
 
 def _copy_tree(
