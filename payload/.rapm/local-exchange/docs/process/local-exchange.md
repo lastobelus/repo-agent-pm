@@ -39,41 +39,56 @@ Run this in the project wrapper root:
 When creating a branch, the agent/script must upstream it to `exchange`:
 
 ```bash
-# ... create branch ...
+branch="$(git symbolic-ref --short HEAD)"
+
+# Push the current branch to the exchange dashboard and set upstream
 git push -u exchange HEAD
+
+# Keep the dashboard fresh for other slots
+git fetch exchange --prune
 ```
+
+If `exchange` is missing, rerun `./scripts/setup-exchange.sh` from the wrapper root.
 
 ### `bin/slot-finish`
-When finishing, clean up the exchange to keep the dashboard clean:
+When a task is landed or abandoned, remove the **topic branch** from Exchange to reduce noise.
+
+If you already switched to `main`, pass the branch name explicitly (do not delete `main`).
 
 ```bash
-# ... after merging/parking ...
-git push exchange --delete <branch_name>
+branch="${1:-$(git symbolic-ref --short HEAD)}"
+
+if [ "$branch" = "main" ] || [ "$branch" = "stable" ]; then
+  echo "Refusing to delete $branch from Exchange. Pass the topic branch name explicitly." >&2
+  exit 1
+fi
+
+# Delete the branch from the dashboard
+git push exchange :"$branch" || true
+
+# Prune the refs locally so GitX stays clean
+git fetch exchange --prune
 ```
 
-## 3.1 Optional: Make Exchange “Out-of-Band”
+If you want to keep a historical breadcrumb for a complex feature, leave the branch in Exchange; otherwise, delete it to keep the view focused on current work.
 
-If you want agents to remain unaware of the Local Exchange, you can still get most of the benefit by making the *project wrapper tooling* set up defaults:
+## 4. Using the Dashboard
 
-- Set `exchange` as the default push target for topic branches (`remote.pushDefault=exchange`).
-- Ensure the branch upstream is set to `exchange` when the branch is created.
-- Use a `pre-push` hook to prevent accidental pushes to `origin` for ephemeral branches.
-
-In that setup, agents simply run `git push` (no remote specified) and their branches become visible in the Exchange automatically.
-
-## 4. Visibility (GitX Wrapper)
-To view the dashboard, use a wrapper that fetches the latest state before launching the GUI:
+From any slot, fetch the Exchange and open GitX with all refs:
 
 ```bash
 ./scripts/gitx-wrapper.sh
 ```
 
-## 5. GitX as a “Work Timeline”
+If GitX is not installed, run `git fetch exchange` and use your preferred visualizer (`gitk --all`, Fork, etc.).
 
-If you keep ephemeral branches (as labels) in the Local Exchange, GitX becomes a lightweight dashboard:
+## 5. Out-of-Band Visibility (Optional)
 
-- The history stays linear (fast-forward landings on `main`).
-- Branch labels point at the moment work started.
-- The commits for that work sit immediately after the branch label, making review/inspection fast.
+To make Exchange pushes the default without changing agent behavior, set a push default in each slot after running setup:
 
-The Exchange preserves these labels locally without polluting GitHub.
+```bash
+git config remote.pushDefault exchange
+git push -u exchange HEAD
+```
+
+With this in place, a normal `git push` updates the Exchange dashboard. Add an operator-managed `pre-push` hook to block accidental pushes of ephemeral branches to `origin` if needed.

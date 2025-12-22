@@ -43,3 +43,8 @@ The intent is to preserve the “branches as labels” visualization without pus
 ## What Gets Installed
 
 Everything under `payload/` is what the installer copies into the consumer project.
+
+## Guided Install (Optional)
+
+In addition to the static installer, the kit includes a guided install playbook at
+`payload/docs/ai/playbooks/installer.md` for agent-led tailoring (branch names, test commands, etc.).

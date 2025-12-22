@@ -10,6 +10,14 @@ This kit is currently optimized for **new Phoenix/Elixir/Ash projects**. Some pl
 - trunk branch is `main`
 - agent branches are `topic/*`
 
+## Guided Install (Optional)
+
+If you want to tailor the kit to your project’s conventions (branch names, test command, etc.), run the guided install playbook:
+
+```bash
+./scripts/run-prompt installer
+```
+
 ## The TODO Checkpoint
 
 The coordination “nervous system” is `docs/process/TODO.md`.

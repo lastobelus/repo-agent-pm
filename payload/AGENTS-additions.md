@@ -22,6 +22,14 @@ This kit is currently optimized for **new Phoenix/Elixir/Ash projects**.
 4. **Starting a Topic (clean-context)**: Use `./scripts/start-topic -t docs/process/topics/NNN-<slug>`.
 5. **Continuing a Topic (clean-context)**: Use `./scripts/continue-topic -t docs/process/topics/NNN-<slug>`.
 
+## Guided Install (Optional)
+
+For a tailored install (branch names, test command, existing docs), run:
+
+```
+./scripts/run-prompt installer
+```
+
 ## Topics vs TODOs
 
 - **TODOs** are intended to be **one-shot** (finish in a single session / clean-context run).

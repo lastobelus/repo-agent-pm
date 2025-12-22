@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-SRC_DIR="$ROOT_DIR/.kit/local-exchange"
+SRC_DIR="$ROOT_DIR/.rapm/local-exchange"
 
 if [ ! -d "$SRC_DIR" ]; then
   echo "Error: Missing local-exchange kit files at $SRC_DIR" >&2

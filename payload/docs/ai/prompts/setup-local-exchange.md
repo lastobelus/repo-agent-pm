@@ -6,8 +6,8 @@ inputs:
   - AGENTS.md
   - docs/ai/instructions/context-strategy.md
   - docs/process/README.md
-  - .kit/local-exchange/docs/process/local-exchange.md
-  - scripts/install-local-exchange.sh
+  - .rapm/local-exchange/docs/process/local-exchange.md
+  - scripts/install-local-exchange
 outputs:
   - local-exchange docs + scripts installed
 stop_conditions:
@@ -23,8 +23,7 @@ Goals:
 
 Steps:
 
-1. Run `./scripts/install-local-exchange.sh`.
+1. Run `./scripts/install-local-exchange`.
 2. Ask the human where their wrapper root is (the directory that contains `slot-1`, `slot-2`, etc.).
 3. In that wrapper root, run `./scripts/setup-exchange.sh`.
 4. Explain the “out-of-band” option (make `git push` default to exchange) if they want agents to remain unaware of Exchange.
-

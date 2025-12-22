@@ -1,6 +1,10 @@
-# Simple Agentic Process Setup
+# repo-agent-pm
 
-This repository maintains **The Kit**: a redistributable set of process docs, agent playbooks, and helper scripts for running a solo-dev + multi-agent workflow.
+This repository maintains **repo-agent-pm (rapm)**: a redistributable set of process docs, agent playbooks, and helper scripts for running a solo-dev + multi-agent workflow.
+
+**What this is:** lightweight, in-repo coordination for **one human running multiple concurrent agents**.
+
+**What this is not:** a good alternative to project management for multi-human teams. It deliberately trades off multi-person planning features for speed, flexibility, and just enough back-pressure to keep a solo operator and several agents aligned.
 
 ## Repo Layout
 
@@ -16,6 +20,13 @@ This repository maintains **The Kit**: a redistributable set of process docs, ag
 
 ```bash
 python3 scaffold-project.py /path/to/your/project
+```
+
+Overwrite modes:
+
+```bash
+python3 scaffold-project.py --overwrite /path/to/your/project
+python3 scaffold-project.py --overwrite-keep-todo /path/to/your/project
 ```
 
 Installer behavior:

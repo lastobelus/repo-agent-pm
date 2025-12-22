@@ -11,8 +11,15 @@ ADD_MARKER_START = "# --- Process Kit Additions (simple-agentic-process-setup) S
 ADD_MARKER_END = "# --- Process Kit Additions (simple-agentic-process-setup) END ---"
 
 
-def _copy_tree(src_dir: str, dst_dir: str, *, overwrite: bool) -> set[str]:
+def _copy_tree(
+    src_dir: str,
+    dst_dir: str,
+    *,
+    overwrite: bool,
+    skip_if_exists: set[str] | None = None,
+) -> set[str]:
     copied: set[str] = set()
+    skip_if_exists = skip_if_exists or set()
     for root, dirs, files in os.walk(src_dir):
         rel_root = os.path.relpath(root, src_dir)
         dst_root = dst_dir if rel_root == "." else os.path.join(dst_dir, rel_root)
@@ -24,13 +31,15 @@ def _copy_tree(src_dir: str, dst_dir: str, *, overwrite: bool) -> set[str]:
         for filename in files:
             src_path = os.path.join(root, filename)
             dst_path = os.path.join(dst_root, filename)
+            rel_dst = os.path.relpath(dst_path, dst_dir)
 
             os.makedirs(os.path.dirname(dst_path), exist_ok=True)
 
+            if rel_dst in skip_if_exists and os.path.exists(dst_path):
+                continue
             if (not overwrite) and os.path.exists(dst_path):
                 continue
             shutil.copy2(src_path, dst_path)
-            rel_dst = os.path.relpath(dst_path, dst_dir)
             copied.add(rel_dst)
 
             try:
@@ -42,7 +51,23 @@ def _copy_tree(src_dir: str, dst_dir: str, *, overwrite: bool) -> set[str]:
     return copied
 
 
-def install_payload(target_dir: str) -> None:
+def _replace_additions_block(existing: str, wrapped_additions: str) -> str | None:
+    if (ADD_MARKER_START not in existing) or (ADD_MARKER_END not in existing):
+        return None
+    try:
+        before, rest = existing.split(ADD_MARKER_START, 1)
+        _, after = rest.split(ADD_MARKER_END, 1)
+    except ValueError:
+        return None
+    return f"{before}{wrapped_additions}{after.lstrip()}"
+
+
+def install_payload(
+    target_dir: str,
+    *,
+    overwrite: bool,
+    skip_if_exists: set[str] | None = None,
+) -> None:
     if not os.path.isdir(PAYLOAD_DIR):
         raise RuntimeError(f"Missing payload directory: {PAYLOAD_DIR}")
 
@@ -54,7 +79,12 @@ def install_payload(target_dir: str) -> None:
         with open(payload_additions_src, "r") as f:
             payload_additions_content = f.read().rstrip() + "\n"
 
-    copied = _copy_tree(PAYLOAD_DIR, target_dir, overwrite=False)
+    copied = _copy_tree(
+        PAYLOAD_DIR,
+        target_dir,
+        overwrite=overwrite,
+        skip_if_exists=skip_if_exists,
+    )
     print("Installed: payload/*")
 
     agents_md_dst = os.path.join(target_dir, "AGENTS.md")
@@ -74,15 +104,24 @@ def install_payload(target_dir: str) -> None:
 
     if not os.path.isfile(agents_md_dst):
         with open(agents_md_dst, "w") as f:
-            f.write(additions)
+            f.write(wrapped_additions)
         print("Created: AGENTS.md from AGENTS-additions.md")
         applied = True
     else:
         with open(agents_md_dst, "r") as f:
             existing = f.read()
 
-        if (ADD_MARKER_START in existing) or (ADD_MARKER_END in existing):
-            print("Skipped: AGENTS-additions.md already applied")
+        replaced = _replace_additions_block(existing, wrapped_additions)
+        if replaced is not None:
+            if replaced != existing:
+                with open(agents_md_dst, "w") as f:
+                    f.write(replaced)
+                print("Updated: AGENTS-additions.md block in AGENTS.md")
+            else:
+                print("Skipped: AGENTS-additions.md already up to date")
+            applied = True
+        elif (ADD_MARKER_START in existing) or (ADD_MARKER_END in existing):
+            print("Skipped: AGENTS-additions.md has partial markers")
             applied = True
         else:
             with open(agents_md_dst, "a") as f:
@@ -134,6 +173,16 @@ def main() -> None:
         help="Allow installing into a directory that already contains 'payload/'.",
     )
     parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing kit files in the target directory.",
+    )
+    parser.add_argument(
+        "--overwrite-keep-todo",
+        action="store_true",
+        help="Overwrite existing kit files, except docs/process/TODO.md.",
+    )
+    parser.add_argument(
         "--keep-additions",
         action="store_true",
         help="Keep AGENTS-additions.md in the target directory after applying.",
@@ -147,9 +196,21 @@ def main() -> None:
             "Pick a target project directory (not the kit repo root), or pass --force."
         )
 
+    if args.overwrite and args.overwrite_keep_todo:
+        raise RuntimeError("Use only one of --overwrite or --overwrite-keep-todo.")
+
+    overwrite = args.overwrite or args.overwrite_keep_todo
+    skip_if_exists = set()
+    if args.overwrite_keep_todo:
+        skip_if_exists.add("docs/process/TODO.md")
+
     if args.keep_additions:
         # Install first, then restore the additions file if we delete it.
-        install_payload(target_dir)
+        install_payload(
+            target_dir,
+            overwrite=overwrite,
+            skip_if_exists=skip_if_exists,
+        )
         # If the file was removed by the installer, put it back from the kit payload.
         payload_additions_src = os.path.join(PAYLOAD_DIR, "AGENTS-additions.md")
         additions_dst = os.path.join(target_dir, "AGENTS-additions.md")
@@ -157,7 +218,11 @@ def main() -> None:
             shutil.copy2(payload_additions_src, additions_dst)
             print("Restored: AGENTS-additions.md (--keep-additions)")
     else:
-        install_payload(target_dir)
+        install_payload(
+            target_dir,
+            overwrite=overwrite,
+            skip_if_exists=skip_if_exists,
+        )
     print("\n✅ Process Kit payload installed.")
     print("\nOptional next steps:")
     print("- Local Exchange: ./scripts/run-prompt setup-local-exchange")

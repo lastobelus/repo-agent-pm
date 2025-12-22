@@ -33,3 +33,28 @@ This keeps the kit installable everywhere, while still enabling a richer interac
 2. ensure `scaffold-project.py` is complete
 3. add optional “guided install” playbook that an agent can run to tailor the kit (e.g., `docs/ai/playbooks/installer.md`).
 4. Install to `../liftanvil/liftanvil-one`, fixing any issues. Some directories may already exist; prompt if any files would be overwritten
+
+## Agent Updates (2025-12-22)
+
+### Decisions
+- Added a guided install playbook for agent-led tailoring.
+- Documented the guided install in both maintainer and consumer-facing docs.
+
+### Changes
+- Added `payload/docs/ai/playbooks/installer.md` (guided install playbook).
+- Updated `payload/docs/ai/playbooks/README.md` to list the installer playbook.
+- Updated `payload/docs/process/README.md` with a guided install section.
+- Updated `payload/AGENTS-additions.md` with a guided install entry.
+- Updated `docs/Overview.md` to reference the guided install playbook.
+
+### Install Attempt
+- Tried `python3 scaffold-project.py ../liftanvil/liftanvil-one`.
+- Blocked by OS permissions when creating `../liftanvil/liftanvil-one/.rapm` (Operation not permitted).
+
+#agent-question
+Can you grant write access or run the installer from your user account?
+Suggested command:
+
+```bash
+python3 scaffold-project.py ../liftanvil/liftanvil-one
+```
