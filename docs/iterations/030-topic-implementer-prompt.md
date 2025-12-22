@@ -1,4 +1,6 @@
-#status/active
+#status/finished
+> Status updated by next-iteration (2025-12-21).
+
 
 - start by reading `payload/docs/ai/README.md`
 

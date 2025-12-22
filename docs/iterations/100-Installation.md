@@ -1,3 +1,5 @@
+#status/active
+
 # Installation
 
 This kit currently ships a Python installer (`scaffold-project.py`) that copies `payload/` into a target repository and merges the agent rules into `AGENTS.md`.

@@ -280,6 +280,7 @@ How to proceed (keep this lightweight):
      - artifact exists under `payload/` (docs/scripts/prompts)
      - installer installs it (anything under `payload/` + executable bits in `scaffold-project.py` if needed)
      - `payload/AGENTS-additions.md` explains usage (if applicable)
+     - if you need to ask questions or seek clarification, append a section to the doc with them. Use `#agent-question` and `#agent-clarify` tags so it remains clear who is asking and who is clarifying.
 4) Preserve the separation between maintainer docs (`docs/`) and consumer-installed docs (`payload/docs/`).
 5) Update the iteration doc with:
    - decisions made
