@@ -1,0 +1,302 @@
+#!/bin/bash
+
+set -euo pipefail
+
+usage() {
+  cat >&2 <<'EOF'
+Usage:
+  ./scripts/continue-topic [-t docs/process/topics/NNN-<slug>]
+
+Selects the current iteration doc based on #status/* tags, normalizes statuses,
+and prints a clean-context continue-topic prompt plus the chosen iteration doc.
+
+If selection is ambiguous, this script requires `fzf`.
+EOF
+}
+
+TOPIC_DIR=""
+
+while getopts ":t:h" opt; do
+  case "$opt" in
+    t) TOPIC_DIR="$OPTARG" ;;
+    h) usage; exit 0 ;;
+    *) usage; exit 2 ;;
+  esac
+done
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+infer_topic_dir_from_cwd() {
+  python3 - "$ROOT_DIR" <<'PY'
+import os
+import sys
+
+root = sys.argv[1]
+cwd = os.getcwd()
+
+needle = os.path.join(root, "docs", "process", "topics") + os.sep
+if needle in cwd:
+  after = cwd.split(needle, 1)[1]
+  first = after.split(os.sep, 1)[0]
+  candidate = os.path.join(root, "docs", "process", "topics", first)
+  if os.path.isdir(candidate):
+    print(candidate)
+    raise SystemExit(0)
+
+raise SystemExit(1)
+PY
+}
+
+infer_topic_dir_from_branch() {
+  python3 - "$ROOT_DIR" <<'PY'
+import glob
+import os
+import subprocess
+import sys
+
+root = sys.argv[1]
+
+try:
+  branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+except Exception:
+  raise SystemExit(1)
+
+if not branch.startswith("topic/"):
+  raise SystemExit(1)
+
+slug = branch.split("/", 1)[1]
+pattern = os.path.join(root, "docs", "process", "topics", f"[0-9][0-9][0-9]-{slug}")
+matches = [p for p in glob.glob(pattern) if os.path.isdir(p)]
+
+if len(matches) != 1:
+  raise SystemExit(1)
+
+print(matches[0])
+PY
+}
+
+if [ -z "$TOPIC_DIR" ]; then
+  if TOPIC_DIR="$(infer_topic_dir_from_cwd 2>/dev/null)"; then
+    :
+  elif TOPIC_DIR="$(infer_topic_dir_from_branch 2>/dev/null)"; then
+    :
+  else
+    echo "Error: Could not infer topic directory. Use -t docs/process/topics/NNN-<slug>." >&2
+    usage
+    exit 2
+  fi
+fi
+
+if [[ "$TOPIC_DIR" != /* ]]; then
+  TOPIC_DIR="$ROOT_DIR/$TOPIC_DIR"
+fi
+
+if [ ! -d "$TOPIC_DIR" ]; then
+  echo "Error: Topic dir not found: ${TOPIC_DIR#$ROOT_DIR/}" >&2
+  exit 1
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Error: python3 is required." >&2
+  exit 1
+fi
+
+selection_json=$(python3 - "$ROOT_DIR" "$TOPIC_DIR" <<'PY'
+import json
+import os
+import re
+import sys
+from datetime import date
+
+root = sys.argv[1]
+topic_dir = sys.argv[2]
+
+status_re = re.compile(r"^#status/([A-Za-z0-9_-]+)\s*$")
+
+def read_lines(path: str) -> list[str]:
+  with open(path, "r", encoding="utf-8") as f:
+    return f.read().splitlines(True)
+
+def write_lines(path: str, lines: list[str]) -> None:
+  with open(path, "w", encoding="utf-8") as f:
+    f.write("".join(lines))
+
+def find_status_index(lines: list[str]):
+  for i, line in enumerate(lines):
+    m = status_re.match(line.rstrip("\n"))
+    if m:
+      return i, m.group(1)
+  return None, None
+
+def ensure_status(lines: list[str], default_status: str) -> list[str]:
+  idx, _ = find_status_index(lines)
+  if idx is not None:
+    return lines
+  return [f"#status/{default_status}\n", "\n"] + lines
+
+def has_note(lines: list[str]) -> bool:
+  for line in lines[:12]:
+    if line.startswith("> Status updated by continue-topic"):
+      return True
+  return False
+
+def set_status(lines: list[str], new_status: str, *, note: bool) -> list[str]:
+  idx, _ = find_status_index(lines)
+  if idx is None:
+    lines = [f"#status/{new_status}\n", "\n"] + lines
+    idx = 0
+  else:
+    lines[idx] = f"#status/{new_status}\n"
+
+  if note and not has_note(lines):
+    insert_at = idx + 1
+    note_lines = [f"> Status updated by continue-topic ({date.today().isoformat()}).\n", "\n"]
+    lines[insert_at:insert_at] = note_lines
+  return lines
+
+paths: list[str] = []
+for name in os.listdir(topic_dir):
+  if not name.endswith(".md"):
+    continue
+  if name == "README.md":
+    continue
+  paths.append(os.path.join(topic_dir, name))
+
+paths.sort()
+
+items = []
+for p in paths:
+  rel = os.path.relpath(p, root)
+  lines = read_lines(p)
+  lines = ensure_status(lines, "draft")
+  idx, status = find_status_index(lines)
+  assert status is not None
+  items.append({"path": p, "rel": rel, "name": os.path.basename(p), "status": status, "lines": lines})
+
+eligible = [it for it in items if it["status"] != "finished"]
+actives = [it for it in items if it["status"] == "active"]
+
+out = {
+  "eligible": [{"rel": it["rel"], "status": it["status"], "path": it["path"]} for it in eligible],
+  "active": [{"rel": it["rel"], "status": it["status"], "path": it["path"]} for it in actives],
+}
+
+print(json.dumps(out))
+PY
+)
+
+ELIGIBLE_COUNT=$(python3 -c 'import json,sys; print(len(json.loads(sys.stdin.read())["eligible"]))' <<<"$selection_json")
+if [ "$ELIGIBLE_COUNT" -eq 0 ]; then
+  echo "Error: No eligible iteration docs found (everything is #status/finished)." >&2
+  exit 1
+fi
+
+CHOSEN_REL=""
+if [ "$ELIGIBLE_COUNT" -eq 1 ]; then
+  CHOSEN_REL=$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["eligible"][0]["rel"])' <<<"$selection_json")
+else
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "Error: fzf is required when multiple iteration docs are eligible." >&2
+    exit 1
+  fi
+
+  choices=$(python3 - <<'PY' "$selection_json"
+import json
+import sys
+
+data = json.loads(sys.argv[1])
+rows = []
+for it in data["eligible"]:
+  rows.append(f"{it['status']}\t{it['rel']}")
+print("\n".join(rows))
+PY
+)
+
+  picked=$(printf "%s\n" "$choices" | fzf --prompt="Select iteration doc > " --with-nth=1,2 --delimiter=$'\t')
+  if [ -z "$picked" ]; then
+    echo "Error: No selection made." >&2
+    exit 1
+  fi
+  CHOSEN_REL=$(printf "%s" "$picked" | awk -F $'\t' '{print $2}')
+fi
+
+python3 - "$ROOT_DIR" "$TOPIC_DIR" "$CHOSEN_REL" <<'PY'
+import os
+import re
+import sys
+from datetime import date
+
+root = sys.argv[1]
+topic_dir = sys.argv[2]
+chosen_rel = sys.argv[3]
+
+status_re = re.compile(r"^#status/([A-Za-z0-9_-]+)\s*$")
+
+def read_lines(path: str) -> list[str]:
+  with open(path, "r", encoding="utf-8") as f:
+    return f.read().splitlines(True)
+
+def write_lines(path: str, lines: list[str]) -> None:
+  with open(path, "w", encoding="utf-8") as f:
+    f.write("".join(lines))
+
+def find_status_index(lines: list[str]):
+  for i, line in enumerate(lines):
+    m = status_re.match(line.rstrip("\n"))
+    if m:
+      return i, m.group(1)
+  return None, None
+
+def ensure_status(lines: list[str], default_status: str) -> list[str]:
+  idx, _ = find_status_index(lines)
+  if idx is not None:
+    return lines
+  return [f"#status/{default_status}\n", "\n"] + lines
+
+def has_note(lines: list[str]) -> bool:
+  for line in lines[:12]:
+    if line.startswith("> Status updated by continue-topic"):
+      return True
+  return False
+
+def set_status(lines: list[str], new_status: str, *, note: bool) -> list[str]:
+  idx, _ = find_status_index(lines)
+  if idx is None:
+    lines = [f"#status/{new_status}\n", "\n"] + lines
+    idx = 0
+  else:
+    lines[idx] = f"#status/{new_status}\n"
+  if note and not has_note(lines):
+    insert_at = idx + 1
+    lines[insert_at:insert_at] = [f"> Status updated by continue-topic ({date.today().isoformat()}).\n", "\n"]
+  return lines
+
+chosen_abs = os.path.join(root, chosen_rel)
+
+for name in os.listdir(topic_dir):
+  if not name.endswith(".md") or name == "README.md":
+    continue
+  path = os.path.join(topic_dir, name)
+  lines = read_lines(path)
+  lines = ensure_status(lines, "draft")
+  _, status = find_status_index(lines)
+  assert status is not None
+
+  if os.path.abspath(path) == os.path.abspath(chosen_abs):
+    lines = set_status(lines, "active", note=False)
+  else:
+    if status == "active":
+      lines = set_status(lines, "finished", note=True)
+
+  write_lines(path, lines)
+PY
+
+"$ROOT_DIR/scripts/run-prompt" continue-topic
+
+CHOSEN_ABS="$ROOT_DIR/$CHOSEN_REL"
+echo "---"
+echo "File: $CHOSEN_REL"
+echo "---"
+cat "$CHOSEN_ABS"
+echo ""

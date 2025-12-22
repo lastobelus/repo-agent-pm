@@ -112,10 +112,10 @@ def install_payload(target_dir: str) -> None:
             )
 
     for rel_script in [
-        "scripts/run-prompt.sh",
-        "scripts/install-local-exchange.sh",
-        "scripts/setup-exchange.sh",
-        "scripts/gitx-wrapper.sh",
+        "scripts/run-prompt",
+        "scripts/start-topic",
+        "scripts/continue-topic",
+        "scripts/install-local-exchange",
     ]:
         script_path = os.path.join(target_dir, rel_script)
         if os.path.isfile(script_path):
@@ -160,7 +160,7 @@ def main() -> None:
         install_payload(target_dir)
     print("\n✅ Process Kit payload installed.")
     print("\nOptional next steps:")
-    print("- Local Exchange: ./scripts/run-prompt.sh setup-local-exchange")
+    print("- Local Exchange: ./scripts/run-prompt setup-local-exchange")
 
 
 if __name__ == "__main__":

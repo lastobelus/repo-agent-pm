@@ -1,6 +1,6 @@
 #!/bin/bash
-# Usage: ./scripts/run-prompt.sh <task_name>
-# Example: ./scripts/run-prompt.sh implement
+# Usage: ./scripts/run-prompt <task_name>
+# Example: ./scripts/run-prompt implement-one-todo
 
 set -euo pipefail
 

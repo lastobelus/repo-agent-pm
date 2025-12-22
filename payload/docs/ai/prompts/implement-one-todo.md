@@ -2,6 +2,7 @@
 kind: prompt
 mode: clean-context
 name: implement
+name: implement-one-todo
 inputs:
   - AGENTS.md
   - docs/ai/instructions/context-strategy.md
@@ -27,4 +28,3 @@ Protocol:
 1. Read `docs/ai/playbooks/todo-implementer.md` and follow it.
 2. Treat `docs/specs/implemented/` as the source of truth for existing behavior.
 3. If anything is ambiguous, stop and ask the human.
-

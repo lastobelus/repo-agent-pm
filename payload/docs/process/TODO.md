@@ -13,7 +13,7 @@ When adding new todos, it is acceptable to add them without origin tags as long 
 If you want stable origin tags immediately, run:
 
 ```bash
-./scripts/run-prompt.sh add-todo
+./scripts/run-prompt add-todo
 ```
 
 ## Inbox (New Feedback)

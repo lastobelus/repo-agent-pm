@@ -36,4 +36,3 @@ chmod 755 "$ROOT_DIR/scripts/gitx-wrapper.sh" || true
 echo ""
 echo "Local Exchange files installed."
 echo "Next: run ./scripts/setup-exchange.sh from your wrapper root (where slot clones live)."
-

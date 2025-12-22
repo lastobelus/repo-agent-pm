@@ -32,6 +32,22 @@ It stays workable because:
 
 Worst case, an occasional conflict means re-doing one small todo. That’s acceptable because the loop is optimized for atomic, small tasks.
 
+## Topics (Iterative Work)
+
+If a task is too large or uncertain for a one-shot TODO run, use a **topic**.
+
+- Topics live under `docs/process/topics/` (one directory per topic).
+- Topic work is iterative across multiple clean-context runs.
+
+See `docs/process/topics/README.md`.
+
+Quick start:
+
+```bash
+./scripts/start-topic -t docs/process/topics/001-<slug>
+./scripts/continue-topic -t docs/process/topics/001-<slug>
+```
+
 ## Adding Todos (Origin Tags)
 
 When adding new todos, you can either:
@@ -40,7 +56,7 @@ When adding new todos, you can either:
 - use the clean-context prompt that produces stable origin tags via a two-step doc commit:
 
 ```bash
-./scripts/run-prompt.sh add-todo
+./scripts/run-prompt add-todo
 ```
 
 ## Reducing TODO Conflicts (Optional)
@@ -56,5 +72,5 @@ Local Exchange is an operator workflow for “branches as labels” visibility w
 It is not installed by default. To set it up in a project:
 
 ```bash
-./scripts/run-prompt.sh setup-local-exchange
+./scripts/run-prompt setup-local-exchange
 ```

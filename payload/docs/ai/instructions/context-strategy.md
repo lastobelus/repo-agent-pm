@@ -19,16 +19,18 @@ When working on this project, look for specifications in these specific folders:
 3.  **`docs/specs/drafts/`**: Rough ideas. **Ignore these** when coding unless explicitly instructed to "work on a draft."
 
 ## Scripts
-Use `scripts/run-prompt.sh <task_name>` to automatically load the relevant specs for your current task.
+Use `scripts/run-prompt <task_name>` to automatically load the relevant specs for your current task.
 
 Common names:
 
 - `add-todo` (clean-context add todos + origin tags)
-- `implement` (clean-context todo implementer)
+- `implement-one-todo` (clean-context todo implementer)
 - `land` (clean-context closer)
 - `process` (clean-context triage)
 - `process-improver` (clean-context process iteration)
 - `setup-local-exchange` (clean-context Local Exchange setup)
+- `start-topic` (clean-context long-lived topic starter)
+- `continue-topic` (clean-context long-lived topic continuation)
 
 Prompt/playbook inputs primarily come from YAML frontmatter in `docs/ai/prompts/` and `docs/ai/playbooks/`.
 

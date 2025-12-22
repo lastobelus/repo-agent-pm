@@ -1,6 +1,6 @@
 ## Context Strategy
 - **Agents must read** `docs/ai/instructions/context-strategy.md` to understand where to find specs.
-- **Clean-context jobs:** Use the prompts in `docs/ai/prompts/` (via `scripts/run-prompt.sh <name>`).
+- **Clean-context jobs:** Use the prompts in `docs/ai/prompts/` (via `scripts/run-prompt <name>`).
 - **Mid-session procedures:** Use the playbooks in `docs/ai/playbooks/`.
 
 ## Current Scope (Temporary)
@@ -15,10 +15,17 @@ This kit is currently optimized for **new Phoenix/Elixir/Ash projects**.
 
 
 ## Core Workflows
-0. **Adding Todos (clean-context)**: Run `./scripts/run-prompt.sh add-todo`.
-1. **Picking a Todo (clean-context)**: Run `./scripts/run-prompt.sh implement`.
-2. **Finishing a Task (clean-context)**: Run `./scripts/run-prompt.sh land`.
-3. **Processing Feedback (clean-context)**: Run `./scripts/run-prompt.sh process`.
+0. **Adding Todos (clean-context)**: Run `./scripts/run-prompt add-todo`.
+1. **Picking a Todo (clean-context)**: Run `./scripts/run-prompt implement-one-todo`.
+2. **Finishing a Task (clean-context)**: Run `./scripts/run-prompt land`.
+3. **Processing Feedback (clean-context)**: Run `./scripts/run-prompt process`.
+4. **Starting a Topic (clean-context)**: Use `./scripts/start-topic -t docs/process/topics/NNN-<slug>`.
+5. **Continuing a Topic (clean-context)**: Use `./scripts/continue-topic -t docs/process/topics/NNN-<slug>`.
+
+## Topics vs TODOs
+
+- **TODOs** are intended to be **one-shot** (finish in a single session / clean-context run).
+- **Topics** are intended to be worked **iteratively** over multiple runs, on a long-lived `topic/<slug>` branch.
 
 ## TODO Discipline (glm-safe rails)
 

@@ -28,9 +28,11 @@ Installer behavior:
 Use the prompt context helper:
 
 ```bash
-./scripts/run-prompt.sh implement
+./scripts/run-prompt implement-one-todo
 ```
 
 ## Maintaining The Kit
 
 Start with `docs/iterations/001-initial-feedback.md` and `docs/iterations/002-updated-intent.md`.
+
+Process note (maintainer-only): `docs/process/sequential-iteration-via-markdown-files.md`.

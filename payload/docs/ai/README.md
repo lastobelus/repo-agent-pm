@@ -34,7 +34,7 @@ The frontmatter is metadata for tooling; it is not meant to be shown to the agen
 
 ## Tooling
 
-Use `scripts/run-prompt.sh <name>` to print a prompt/playbook plus its inputs (and any project-specific inputs from `scripts/context.config.yaml`).
+Use `scripts/run-prompt <name>` to print a prompt/playbook plus its inputs (and any project-specific inputs from `scripts/context.config.yaml`).
 
 ## YAML Spec (Tiny)
 
@@ -72,4 +72,4 @@ Rules:
 
 - `task_inputs` only supports one level deep (task name keys).
 - Values must be lists written as `- ` items.
-- Duplicate paths are deduped by `scripts/run-prompt.sh`.
+- Duplicate paths are deduped by `scripts/run-prompt`.

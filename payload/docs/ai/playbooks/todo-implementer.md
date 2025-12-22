@@ -11,6 +11,10 @@ stop_conditions:
 
 # Todo Implementer
 
+This playbook is for **one-shot TODO work** (complete one Approved todo group in a single run).
+
+If the work is long-lived or needs multiple sessions, use the **topic** workflow instead (see `docs/process/topics/README.md`).
+
 **Role:** Coding Agent
 **Input:** A single item from `docs/process/TODO.md` (the `Approved` section).
 
@@ -86,4 +90,4 @@ This kit uses a two-commit rhythm:
 1. Implementation commit (you just made)
 2. Doc-only bookkeeping commit updating `docs/process/TODO.md` with `#done/<implementation_sha>`
 
-If you are not also acting as the closer, stop here and instruct the human (or closer agent) to run the `finish-and-land` playbook (via `./scripts/run-prompt.sh land`).
+If you are not also acting as the closer, stop here and instruct the human (or closer agent) to run the `finish-and-land` playbook (via `./scripts/run-prompt land`).

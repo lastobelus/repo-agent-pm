@@ -12,7 +12,7 @@ instructions:
 global_inputs:
   # - README.md
 
-# Per-task extra inputs. Keys match the name you pass to `scripts/run-prompt.sh`.
+# Per-task extra inputs. Keys match the name you pass to `scripts/run-prompt`.
 task_inputs:
   # implement:
   #   - lib/

@@ -1,0 +1,117 @@
+#!/bin/bash
+
+set -euo pipefail
+
+usage() {
+  cat >&2 <<'EOF'
+Usage:
+  ./scripts/start-topic [-t docs/process/topics/NNN-<slug>]
+
+Prints a clean-context start-topic prompt plus the topic's initial iteration doc.
+Output goes to stdout (so it can be piped into an agent runner).
+EOF
+}
+
+TOPIC_DIR=""
+
+while getopts ":t:h" opt; do
+  case "$opt" in
+    t) TOPIC_DIR="$OPTARG" ;;
+    h) usage; exit 0 ;;
+    *) usage; exit 2 ;;
+  esac
+done
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+infer_topic_dir_from_cwd() {
+  python3 - "$ROOT_DIR" <<'PY'
+import os
+import sys
+
+root = sys.argv[1]
+cwd = os.getcwd()
+
+needle = os.path.join(root, "docs", "process", "topics") + os.sep
+if needle in cwd:
+  after = cwd.split(needle, 1)[1]
+  first = after.split(os.sep, 1)[0]
+  candidate = os.path.join(root, "docs", "process", "topics", first)
+  if os.path.isdir(candidate):
+    print(candidate)
+    raise SystemExit(0)
+
+raise SystemExit(1)
+PY
+}
+
+infer_topic_dir_from_branch() {
+  python3 - "$ROOT_DIR" <<'PY'
+import glob
+import os
+import subprocess
+import sys
+
+root = sys.argv[1]
+
+try:
+  branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+except Exception:
+  raise SystemExit(1)
+
+if not branch.startswith("topic/"):
+  raise SystemExit(1)
+
+slug = branch.split("/", 1)[1]
+pattern = os.path.join(root, "docs", "process", "topics", f"[0-9][0-9][0-9]-{slug}")
+matches = [p for p in glob.glob(pattern) if os.path.isdir(p)]
+
+if len(matches) != 1:
+  raise SystemExit(1)
+
+print(matches[0])
+PY
+}
+
+if [ -z "$TOPIC_DIR" ]; then
+  if TOPIC_DIR="$(infer_topic_dir_from_cwd 2>/dev/null)"; then
+    :
+  elif TOPIC_DIR="$(infer_topic_dir_from_branch 2>/dev/null)"; then
+    :
+  else
+    echo "Error: Could not infer topic directory. Use -t docs/process/topics/NNN-<slug>." >&2
+    usage
+    exit 2
+  fi
+fi
+
+if [[ "$TOPIC_DIR" != /* ]]; then
+  TOPIC_DIR="$ROOT_DIR/$TOPIC_DIR"
+fi
+
+TEMPLATE="$ROOT_DIR/docs/process/topics/000-example/000-initial-iteration.md"
+ITERATION_DOC="$TOPIC_DIR/000-initial-iteration.md"
+
+if [ ! -d "$TOPIC_DIR" ]; then
+  mkdir -p "$TOPIC_DIR"
+  echo "Created topic dir: ${TOPIC_DIR#$ROOT_DIR/}" >&2
+fi
+
+if [ ! -f "$ITERATION_DOC" ]; then
+  if [ ! -f "$TEMPLATE" ]; then
+    echo "Error: Missing template: ${TEMPLATE#$ROOT_DIR/}" >&2
+    exit 1
+  fi
+  cp "$TEMPLATE" "$ITERATION_DOC"
+  echo "Seeded iteration doc: ${ITERATION_DOC#$ROOT_DIR/}" >&2
+fi
+
+"$ROOT_DIR/scripts/run-prompt" start-topic
+
+display="${ITERATION_DOC#$ROOT_DIR/}"
+echo "---"
+echo "File: $display"
+echo "---"
+cat "$ITERATION_DOC"
+echo ""
