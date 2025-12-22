@@ -223,8 +223,11 @@ def main() -> None:
             overwrite=overwrite,
             skip_if_exists=skip_if_exists,
         )
-    print("\n✅ Process Kit payload installed.")
-    print("\nOptional next steps:")
+    print("\n✅ repo-agent-pm installed.")
+    print("\nWhere to start:")
+    print("- Process overview: docs/process/README.md")
+    print("- Guided install (optional): ./scripts/run-prompt installer")
+    print("- Optional add-ons live under: .rapm/")
     print("- Local Exchange: ./scripts/run-prompt setup-local-exchange")
 
 
