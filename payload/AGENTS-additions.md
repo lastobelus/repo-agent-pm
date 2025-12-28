@@ -50,7 +50,7 @@ The coordination artifact is `docs/process/TODO.md`. Follow these invariants:
   - implement: `docs/ai/playbooks/todo-implementer.md`
   - land/bookkeep: `docs/ai/playbooks/finish-and-land.md`
 
-## The "Buffered Integration" Protocol
+## The "Buffered Integration" Git Protocol
 - **`main`** is the development trunk.
 - **`stable`** is the deployed demo branch.
 - Agents work on `topic/*` or short-lived feature branches.
