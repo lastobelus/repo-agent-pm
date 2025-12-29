@@ -2,6 +2,8 @@
 
 This folder contains the core process artifacts that coordinate work between a human operator and multiple CLI agents.
 
+Start here: `docs/README.md`.
+
 ## Current Scope (Temporary)
 
 This kit is currently optimized for **new Phoenix/Elixir/Ash projects**. Some playbooks assume:
@@ -17,6 +19,8 @@ If you want to tailor the kit to your project’s conventions (branch names, tes
 ```bash
 ./scripts/run-prompt installer
 ```
+
+Operator guide with examples: `docs/process/agent-workflows.md`.
 
 ## The TODO Checkpoint
 
@@ -77,7 +81,9 @@ See `docs/process/shared-file-collisions.md`.
 
 Local Exchange is an operator workflow for “branches as labels” visibility without pushing ephemeral branches to GitHub.
 
-It is not installed by default. To set it up in a project:
+See `docs/process/local-exchange.md` for setup and out-of-band options.
+
+To set it up in a project:
 
 ```bash
 ./scripts/run-prompt setup-local-exchange

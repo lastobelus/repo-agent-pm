@@ -27,7 +27,9 @@ We use a specific branching model to prevent AI-generated chaos from breaking th
 * **`topic/*`**: Feature branches where agents work.
 
 **The "Dashboard" (Local Exchange):**
-If you want to see what work is in flight *right now* across different agent "slots", run the `gitx` wrapper. We use a local-only remote called `exchange` to broadcast active branches between directory slots without cluttering GitHub.
+If you want to see what work is in flight *right now* across different agent "slots", use Local Exchange. We use a local-only remote called `exchange` to broadcast active branches between directory slots without cluttering GitHub.
+
+See `docs/process/local-exchange.md` for setup and the GitX helper.
 
 ## 4. How to Drive the Agents
 You don't just "chat" with the bot. You use **Playbooks** to give them specific roles.

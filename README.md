@@ -42,6 +42,8 @@ Use the prompt context helper:
 ./scripts/run-prompt implement-one-todo
 ```
 
+Docs entry point in the consumer project: `docs/README.md`.
+
 ## Maintaining The Kit
 
 Start with `docs/iterations/001-initial-feedback.md` and `docs/iterations/002-updated-intent.md`.

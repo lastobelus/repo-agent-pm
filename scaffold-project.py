@@ -155,6 +155,8 @@ def install_payload(
         "scripts/start-topic",
         "scripts/continue-topic",
         "scripts/install-local-exchange",
+        "scripts/setup-exchange.sh",
+        "scripts/gitx-wrapper.sh",
     ]:
         script_path = os.path.join(target_dir, rel_script)
         if os.path.isfile(script_path):
@@ -225,10 +227,9 @@ def main() -> None:
         )
     print("\n✅ repo-agent-pm installed.")
     print("\nWhere to start:")
-    print("- Process overview: docs/process/README.md")
+    print("- Process overview: docs/README.md")
     print("- Guided install (optional): ./scripts/run-prompt installer")
-    print("- Optional add-ons live under: .rapm/")
-    print("- Local Exchange: ./scripts/run-prompt setup-local-exchange")
+    print("- Local Exchange (optional): docs/process/local-exchange.md")
 
 
 if __name__ == "__main__":

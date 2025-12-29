@@ -44,6 +44,8 @@ The intent is to preserve the “branches as labels” visualization without pus
 
 Everything under `payload/` is what the installer copies into the consumer project.
 
+Entry point in the consumer project: `docs/README.md`.
+
 ## Guided Install (Optional)
 
 In addition to the static installer, the kit includes a guided install playbook at

@@ -2,6 +2,8 @@
 
 This folder contains artifacts intended for use by AI agents (and the human operator).
 
+If you want human-facing explanations and examples of how to run agents, see `docs/process/agent-workflows.md`.
+
 ## Mental Model
 
 There are three layers:

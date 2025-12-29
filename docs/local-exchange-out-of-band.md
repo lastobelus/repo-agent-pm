@@ -2,6 +2,8 @@
 
 This document is for **kit maintainers / operators**.
 
+Consumer-facing summary lives at `payload/docs/process/local-exchange.md`.
+
 Goal: keep the Local Exchange “dashboard” working while requiring **zero explicit knowledge** of it from coding agents.
 
 ## What “Out-of-Band” Really Means
@@ -56,4 +58,3 @@ Tradeoffs:
 - risk of pushing partially rebased states if the watcher syncs at the wrong moment
 
 Recommendation: start with the push-default approach; upgrade to a watcher only if you truly need it.
-
