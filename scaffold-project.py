@@ -152,11 +152,18 @@ def install_payload(
 
     for rel_script in [
         "scripts/run-prompt",
+        "scripts/run-playbook",
         "scripts/start-topic",
         "scripts/continue-topic",
         "scripts/install-local-exchange",
         "scripts/setup-exchange.sh",
         "scripts/gitx-wrapper.sh",
+        "scripts/coder",
+        "scripts/qwen",
+        "scripts/gemini",
+        "scripts/opencode",
+        "scripts/claude",
+        "scripts/validate-cli-wrappers",
     ]:
         script_path = os.path.join(target_dir, rel_script)
         if os.path.isfile(script_path):

@@ -1,0 +1,40 @@
+#!/bin/bash
+# Usage: ./scripts/coder <prompt_name> [cli args...]
+
+set -euo pipefail
+
+TASK="${1:-}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+if [ -z "$TASK" ]; then
+  echo "Usage: $0 <prompt_name> [cli args...]" >&2
+  exit 1
+fi
+
+shift
+
+RUN_PROMPT_CMD=("$ROOT_DIR/scripts/run-prompt")
+if [ "${RUN_PROMPT_INCLUDE_AGENTS:-0}" = "1" ]; then
+  RUN_PROMPT_CMD+=(--with-agents)
+fi
+RUN_PROMPT_CMD+=("$TASK")
+
+CLI_BIN="${CODER_BIN:-coder}"
+
+PATH_CLEAN=""
+IFS=':' read -r -a PATH_PARTS <<< "$PATH"
+for part in "${PATH_PARTS[@]}"; do
+  if [ "$part" = "$SCRIPT_DIR" ]; then
+    continue
+  fi
+  PATH_CLEAN="${PATH_CLEAN:+$PATH_CLEAN:}$part"
+done
+
+if ! env PATH="$PATH_CLEAN" command -v "$CLI_BIN" >/dev/null 2>&1; then
+  echo "Error: $CLI_BIN not found in PATH (after removing $SCRIPT_DIR)." >&2
+  exit 1
+fi
+
+"${RUN_PROMPT_CMD[@]}" | env PATH="$PATH_CLEAN" "$CLI_BIN" "$@"
