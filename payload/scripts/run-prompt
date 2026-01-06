@@ -1,18 +1,43 @@
 #!/bin/bash
-# Usage: ./scripts/run-prompt <task_name>
+# Usage: ./scripts/run-prompt [--with-agents|--no-agents] <task_name>
 # Example: ./scripts/run-prompt implement-one-todo
+# Example: ./scripts/run-prompt --with-agents implement-one-todo
 
 set -euo pipefail
 
-TASK="${1:-}"
+INCLUDE_AGENTS="${RUN_PROMPT_INCLUDE_AGENTS:-0}"
+TASK=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 CONFIG="$ROOT_DIR/scripts/context.config.yaml"
 
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --with-agents)
+      INCLUDE_AGENTS=1
+      shift
+      ;;
+    --no-agents)
+      INCLUDE_AGENTS=0
+      shift
+      ;;
+    --help|-h)
+      echo "Usage: $0 [--with-agents|--no-agents] <name>" >&2
+      echo "  Looks for docs/ai/prompts/<name>.md or docs/ai/playbooks/<name>.md" >&2
+      exit 0
+      ;;
+    *)
+      TASK="$1"
+      shift
+      break
+      ;;
+  esac
+done
+
 if [ -z "$TASK" ]; then
-  echo "Usage: $0 <name>" >&2
+  echo "Usage: $0 [--with-agents|--no-agents] <name>" >&2
   echo "  Looks for docs/ai/prompts/<name>.md or docs/ai/playbooks/<name>.md" >&2
   exit 1
 fi
@@ -133,7 +158,16 @@ yaml_list_task() {
 
 ALL_INPUTS=""
 
-# Always print the selected prompt/playbook/procedure first.
+if [ "$INCLUDE_AGENTS" = "1" ]; then
+  AGENTS_FILE="$ROOT_DIR/AGENTS.md"
+  if [ -f "$AGENTS_FILE" ]; then
+    ALL_INPUTS="$ALL_INPUTS$AGENTS_FILE\n"
+  else
+    echo "Warning: AGENTS.md not found at $AGENTS_FILE (skipping)." >&2
+  fi
+fi
+
+# Always print the selected prompt/playbook/procedure.
 ALL_INPUTS="$ALL_INPUTS$TASK_FILE_REF\n"
 
 # Baseline inputs declared in the prompt/playbook frontmatter.

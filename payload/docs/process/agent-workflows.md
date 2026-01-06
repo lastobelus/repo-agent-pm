@@ -6,7 +6,9 @@ This document translates the agent rules (from `AGENTS.md`) into human-facing in
 
 Agents should always read `docs/ai/instructions/context-strategy.md`. It explains where specs live and how to use prompts/playbooks.
 
-If an agent is starting from a fresh session, you should run `./scripts/run-prompt <name>` and paste the output into the agent.
+If an agent is starting from a fresh session, run `./scripts/run-prompt <name>` and paste the output into the agent.
+
+If you are already mid-session (AGENTS loaded), use `./scripts/run-playbook <name>` to avoid duplicating AGENTS/context-strategy.
 
 ## Current Scope (Temporary Defaults)
 
@@ -106,4 +108,3 @@ That playbook will walk you through the install steps and document the project-s
 ## Local Exchange (Optional)
 
 See `docs/process/local-exchange.md` for setup and out-of-band options.
-

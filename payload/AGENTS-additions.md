@@ -1,8 +1,9 @@
 ## Context Strategy
 - **Agents must read** `docs/ai/instructions/context-strategy.md` to understand where to find specs.
 - **Clean-context jobs:** Use the prompts in `docs/ai/prompts/` (via `scripts/run-prompt <name>`).
-- **Mid-session procedures:** Use the playbooks in `docs/ai/playbooks/`.
-- If you cannot run shell commands in this environment, ask the human to run `scripts/run-prompt` and paste the output.
+- **Mid-session procedures:** Use the playbooks in `docs/ai/playbooks/` (via `scripts/run-playbook <name>` when already in-session).
+- If you are launching a **fresh sub-agent** (clean-context), use `scripts/run-prompt`. If you are already in an interactive session with AGENTS loaded, use `scripts/run-playbook` to avoid duplicate context.
+- If you cannot run shell commands in this environment, ask the human to run the script and paste the output.
 
 ## Current Scope (Temporary)
 

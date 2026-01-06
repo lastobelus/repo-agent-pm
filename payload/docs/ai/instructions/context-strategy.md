@@ -19,7 +19,9 @@ When working on this project, look for specifications in these specific folders:
 3.  **`docs/specs/drafts/`**: Rough ideas. **Ignore these** when coding unless explicitly instructed to "work on a draft."
 
 ## Scripts
-Use `scripts/run-prompt <task_name>` to automatically load the relevant specs for your current task.
+Use `scripts/run-prompt <task_name>` to automatically load the relevant specs for a **clean-context** run.
+
+If you are already in an interactive session and just need the procedure, use `scripts/run-playbook <playbook_name>` instead.
 
 Common names:
 

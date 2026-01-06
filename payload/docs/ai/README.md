@@ -36,7 +36,9 @@ The frontmatter is metadata for tooling; it is not meant to be shown to the agen
 
 ## Tooling
 
-Use `scripts/run-prompt <name>` to print a prompt/playbook plus its inputs (and any project-specific inputs from `scripts/context.config.yaml`).
+- Use `scripts/run-prompt <name>` for **clean-context** runs. It prints a prompt/playbook plus inputs (including any project-specific additions from `scripts/context.config.yaml`).
+- Use `scripts/run-playbook <name>` for **in-session** runs. It prints the playbook plus its declared inputs only.
+- Wrapper scripts in `scripts/` (see `scripts/README.md`) can run prompts directly through specific CLIs.
 
 ## YAML Spec (Tiny)
 

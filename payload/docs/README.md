@@ -29,3 +29,4 @@ This folder is the human-facing documentation installed with the kit.
 2. Copy the printed prompt into a fresh agent session.
 3. If the agent asks for missing context, add the relevant files to `scripts/context.config.yaml` and re-run.
 
+If you are already in an interactive session and only need a procedure, use `./scripts/run-playbook <name>` instead.
