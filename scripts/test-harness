@@ -1,0 +1,182 @@
+#!/bin/bash
+# Usage: scripts/test-harness [--keep] [--probe|--no-probe] [--real] [--only list]
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+KEEP=0
+PROBE=1
+REAL=0
+ONLY=""
+
+usage() {
+  echo "Usage: $0 [--keep] [--probe|--no-probe] [--real] [--only list]" >&2
+  echo "  --keep       Keep the temp project directory." >&2
+  echo "  --probe      Run wrapper validation in probe mode (default)." >&2
+  echo "  --no-probe   Run wrapper validation against real CLIs." >&2
+  echo "  --real       Run a real CLI echo test with a sample prompt + context file." >&2
+  echo "  --only       Comma-separated wrappers to test (e.g. claude,coder)." >&2
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --keep)
+      KEEP=1
+      shift
+      ;;
+    --probe)
+      PROBE=1
+      shift
+      ;;
+    --no-probe)
+      PROBE=0
+      shift
+      ;;
+    --real)
+      REAL=1
+      shift
+      ;;
+    --only)
+      ONLY="${2:-}"
+      shift 2
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown flag: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+tmpdir="$(mktemp -d)"
+
+cleanup() {
+  if [ "$KEEP" = "0" ]; then
+    rm -rf "$tmpdir"
+  else
+    echo "Keeping temp project at: $tmpdir"
+  fi
+}
+
+trap cleanup EXIT
+
+python3 "$ROOT_DIR/scaffold-project.py" --overwrite "$tmpdir"
+
+if [ "$REAL" = "1" ]; then
+  prompt_name="echo-context"
+  token="TOKEN-$(date +%s)-$RANDOM"
+  context_path="$tmpdir/docs/process/sample-context.txt"
+  prompt_path="$tmpdir/docs/ai/prompts/${prompt_name}.md"
+
+  mkdir -p "$(dirname "$context_path")" "$(dirname "$prompt_path")"
+  printf 'Echo token: %s\n' "$token" > "$context_path"
+  cat > "$prompt_path" <<EOF
+---
+kind: prompt
+mode: clean-context
+name: echo-context
+inputs:
+  - docs/process/sample-context.txt
+outputs:
+  - token echoed exactly
+stop_conditions:
+  - file missing
+---
+
+Read the file at \\`docs/process/sample-context.txt\\`. It contains a line with a token.
+
+Output the token **exactly**, on a single line, with no other text.
+EOF
+
+  wrappers=(coder qwen gemini opencode claude)
+  if [ -n "$ONLY" ]; then
+    IFS=',' read -r -a wrappers <<< "$ONLY"
+  fi
+
+  status=0
+  for wrapper in "${wrappers[@]}"; do
+    wrapper_path="$tmpdir/scripts/$wrapper"
+    if [ ! -x "$wrapper_path" ]; then
+      echo "- $wrapper: missing wrapper" >&2
+      status=1
+      continue
+    fi
+
+    bin=""
+    args=""
+    case "$wrapper" in
+      coder)
+        bin="${CODER_FORK_BIN:-${CODER_BIN:-coder}}"
+        args="${CODER_ARGS:-exec - --skip-git-repo-check}"
+        ;;
+      qwen)
+        bin="${QWEN_BIN:-qwen}"
+        args="${QWEN_ARGS:-}"
+        ;;
+      gemini)
+        bin="${GEMINI_BIN:-gemini}"
+        args="${GEMINI_ARGS:-}"
+        ;;
+      opencode)
+        bin="${OPENCODE_BIN:-opencode}"
+        args="${OPENCODE_ARGS:---model zai-coding-plan/glm-4.7}"
+        ;;
+      claude)
+        bin="${CLAUDE_BIN:-claude}"
+        args="${CLAUDE_ARGS:---output-format text}"
+        ;;
+    esac
+
+    if [ "$wrapper" = "claude" ] && [ "${RUN_CLAUDE:-0}" != "1" ]; then
+      echo "- $wrapper: skipped (RUN_CLAUDE=1 to enable)"
+      continue
+    fi
+
+    if ! command -v "$bin" >/dev/null 2>&1; then
+      echo "- $wrapper: skipped (missing CLI: $bin)"
+      continue
+    fi
+
+    IFS=' ' read -r -a cli_args <<< "$args"
+    echo "- $wrapper: running real echo test..."
+    if [ "$wrapper" = "coder" ] && [ -n "${CODER_FORK_BIN:-}" ]; then
+      output=$(cd "$tmpdir" && CODER_BIN="$CODER_FORK_BIN" "$wrapper_path" "$prompt_name" "${cli_args[@]}" 2>&1) || {
+        echo "  ✗ failed" >&2
+        status=1
+        continue
+      }
+    else
+      output=$(cd "$tmpdir" && "$wrapper_path" "$prompt_name" "${cli_args[@]}" 2>&1) || {
+        echo "  ✗ failed" >&2
+        status=1
+        continue
+      }
+    fi
+
+    if printf "%s" "$output" | grep -Fq "$token"; then
+      echo "  ✓ token matched"
+    else
+      echo "  ✗ token missing" >&2
+      status=1
+    fi
+  done
+
+  exit "$status"
+fi
+
+cmd=("$tmpdir/scripts/validate-cli-wrappers")
+if [ "$PROBE" = "1" ]; then
+  cmd+=(--probe)
+fi
+if [ -n "$ONLY" ]; then
+  cmd+=(--only "$ONLY")
+fi
+cmd+=(implement-one-todo)
+
+"${cmd[@]}"

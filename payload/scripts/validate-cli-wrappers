@@ -1,0 +1,150 @@
+#!/bin/bash
+# Usage: ./scripts/validate-cli-wrappers [--probe] [--only claude,coder] <prompt_name> [-- <common args...>]
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+PROMPT=""
+ONLY=""
+PROBE=0
+COMMON_ARGS=()
+
+usage() {
+  echo "Usage: $0 [--probe] [--only claude,coder] <prompt_name> [-- <common args...>]" >&2
+  echo "  --probe       Run wrappers against a stub CLI that captures stdin." >&2
+  echo "  --only        Comma-separated list of wrappers to test." >&2
+  echo "  common args   Passed to every wrapper after the prompt name." >&2
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --probe)
+      PROBE=1
+      shift
+      ;;
+    --only)
+      ONLY="${2:-}"
+      shift 2
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      COMMON_ARGS=("$@")
+      break
+      ;;
+    -* )
+      echo "Unknown flag: $1" >&2
+      usage
+      exit 1
+      ;;
+    *)
+      PROMPT="$1"
+      shift
+      COMMON_ARGS=("$@")
+      break
+      ;;
+  esac
+done
+
+if [ -z "$PROMPT" ]; then
+  usage
+  exit 1
+fi
+
+if [ "${COMMON_ARGS+set}" != "set" ]; then
+  COMMON_ARGS=()
+fi
+
+WRAPPERS=(coder qwen gemini opencode claude)
+if [ -n "$ONLY" ]; then
+  IFS=',' read -r -a WRAPPERS <<< "$ONLY"
+fi
+
+tmpdir=""
+probe_bin=""
+
+if [ "$PROBE" = "1" ]; then
+  tmpdir=$(mktemp -d)
+  probe_bin="$tmpdir/probe-cli"
+  cat > "$probe_bin" <<'EOF'
+#!/bin/bash
+set -euo pipefail
+outfile="${PROBE_OUT:-}"
+argsfile="${PROBE_ARGS:-}"
+if [ -z "$outfile" ]; then
+  echo "PROBE_OUT not set" >&2
+  exit 2
+fi
+if [ -n "$argsfile" ]; then
+  printf "%s\n" "$@" > "$argsfile"
+fi
+cat > "$outfile"
+EOF
+  chmod +x "$probe_bin"
+fi
+
+status=0
+
+for wrapper in "${WRAPPERS[@]}"; do
+  wrapper_path="$ROOT_DIR/scripts/$wrapper"
+  if [ ! -x "$wrapper_path" ]; then
+    echo "- $wrapper: missing or not executable ($wrapper_path)" >&2
+    status=1
+    continue
+  fi
+
+  upper=$(printf "%s" "$wrapper" | tr '[:lower:]' '[:upper:]')
+  bin_var="${upper}_BIN"
+  args_var="${upper}_ARGS"
+  cli_args=()
+
+  if [ -n "${!args_var:-}" ]; then
+    IFS=' ' read -r -a cli_args <<< "${!args_var}"
+  fi
+
+  echo "- $wrapper: running..."
+
+  if [ "$PROBE" = "1" ]; then
+    out_file="$tmpdir/$wrapper.stdin"
+    args_file="$tmpdir/$wrapper.args"
+    if ! env "$bin_var"="$probe_bin" PROBE_OUT="$out_file" PROBE_ARGS="$args_file" "$wrapper_path" "$PROMPT" ${COMMON_ARGS[@]+"${COMMON_ARGS[@]}"} ${cli_args[@]+"${cli_args[@]}"} </dev/null >/dev/null; then
+      echo "  ✗ failed" >&2
+      status=1
+      continue
+    fi
+
+    if [ -s "$out_file" ]; then
+      echo "  ✓ captured stdin ($(wc -c < "$out_file" | tr -d ' ') bytes)"
+      continue
+    fi
+
+    if [ -s "$args_file" ]; then
+      echo "  ✓ captured args ($(wc -c < "$args_file" | tr -d ' ') bytes)"
+      continue
+    fi
+
+    if [ ! -s "$out_file" ] && [ ! -s "$args_file" ]; then
+      echo "  ✗ empty stdin and args capture" >&2
+      status=1
+      continue
+    fi
+  else
+    if ! "$wrapper_path" "$PROMPT" ${COMMON_ARGS[@]+"${COMMON_ARGS[@]}"} ${cli_args[@]+"${cli_args[@]}"}; then
+      echo "  ✗ failed" >&2
+      status=1
+      continue
+    fi
+    echo "  ✓ completed"
+  fi
+done
+
+if [ -n "$tmpdir" ]; then
+  echo "Probe captures in: $tmpdir"
+fi
+
+exit "$status"

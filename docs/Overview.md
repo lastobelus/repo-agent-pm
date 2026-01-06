@@ -46,6 +46,20 @@ Everything under `payload/` is what the installer copies into the consumer proje
 
 Entry point in the consumer project: `docs/README.md`.
 
+Prompt utilities installed in consumer repos:
+
+- `scripts/run-prompt` (clean-context prompt printer)
+- `scripts/run-playbook` (in-session playbook printer)
+
+## Maintainer Test Harness
+
+For kit-level validation, use `scripts/test-harness`. It installs the payload into
+a temporary project directory and runs the wrapper validation script there. Use
+`--real` to run a non-interactive echo test against real CLIs (set per-CLI args via
+`CLAUDE_ARGS`, `CODER_ARGS`, etc.). For the coder fork, also set `CODER_FORK_BIN`.
+
+If you prefer a standard test runner, Bats tests live in `scripts/tests/`.
+
 ## Guided Install (Optional)
 
 In addition to the static installer, the kit includes a guided install playbook at
