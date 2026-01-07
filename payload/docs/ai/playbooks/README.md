@@ -8,6 +8,7 @@ Use `scripts/run-playbook <name>` to print a playbook and its declared inputs du
 
 ## Available Playbooks
 
+- `prepare-slot-for-work` — clean git + branch setup + exchange tracking.
 - `add-todo` — add todos with stable origin tags.
 - `todo-processor` — triage and reorder the TODO queue.
 - `todo-implementer` — implement one approved todo group.

@@ -6,6 +6,7 @@ inputs:
   - AGENTS.md
   - docs/ai/README.md
   - docs/ai/instructions/context-strategy.md
+  - docs/ai/playbooks/prepare-slot-for-work.md
   - docs/process/README.md
   - docs/process/TODO.md
 outputs:
@@ -16,6 +17,8 @@ stop_conditions:
 ---
 
 You are improving the process artifacts in this repository.
+
+Before work, run the `prepare-slot-for-work` playbook using a `process/` branch prefix.
 
 Scope:
 
@@ -29,4 +32,3 @@ Deliverable:
 
 - Make a concrete improvement (docs, prompt clarity, conflict reduction, etc.).
 - Summarize what changed and why.
-

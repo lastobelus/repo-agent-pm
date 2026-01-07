@@ -2,6 +2,8 @@
 kind: playbook
 mode: in-session
 name: finish-and-land
+depends_on:
+  - playbook/prepare-slot-for-work
 writes:
   - docs/process/TODO.md
 stop_conditions:
@@ -71,6 +73,31 @@ git status --porcelain
     - `git commit -m "docs: mark <task> as done"`
 
 ## 4. Landing
-- Push the feature branch.
-- If you have permissions, merge to `main`.
-- If not, request human review.
+
+1. Push the feature branch to exchange:
+
+```bash
+git push -u exchange HEAD
+```
+
+2. Fast-forward `main` locally from `origin/main`:
+
+```bash
+git fetch origin
+git checkout main
+git pull --ff-only origin main
+```
+
+3. Fast-forward `main` to the feature branch:
+
+```bash
+git merge --ff-only <feature-branch>
+```
+
+If this is **not** a clean fast-forward, stop and ask the human (do not attempt a non-ff merge unless explicitly instructed).
+
+4. Push the fast-forwarded `main` to exchange:
+
+```bash
+git push exchange main
+```

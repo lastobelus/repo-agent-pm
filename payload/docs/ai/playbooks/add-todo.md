@@ -2,6 +2,8 @@
 kind: playbook
 mode: in-session
 name: add-todo
+depends_on:
+  - playbook/prepare-slot-for-work
 writes:
   - docs/process/TODO.md
 stop_conditions:
@@ -28,13 +30,7 @@ This playbook uses a **two-step doc commit** so origin tags are stable and deter
 
 ### 1) Preflight
 
-Ensure the working tree is clean:
-
-```bash
-git status --porcelain
-```
-
-If anything is dirty, stop and ask the human.
+Complete `prepare-slot-for-work` first. If already done, continue.
 
 ### 2) Edit: add new todos (no tags yet)
 
@@ -74,4 +70,3 @@ git commit -m "docs: tag new todos"
 
 - Confirm every newly-added checklist line ends with exactly one `#<origin_sha>` tag.
 - Confirm you did not alter existing tags.
-

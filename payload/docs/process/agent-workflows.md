@@ -58,7 +58,7 @@ The agent should run tests, update `docs/process/TODO.md` with `#done/<sha>`, an
 ### Example: Triage the Queue
 
 ```bash
-./scripts/run-prompt process
+./scripts/run-prompt process-todos
 ```
 
 Use this when Inbox grows or TODO ordering needs cleanup.

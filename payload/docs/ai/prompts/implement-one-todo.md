@@ -12,7 +12,7 @@ inputs:
   - docs/specs/pending/
 outputs:
   - code changes + tests
-  - commits on a topic branch
+  - commits on a todo branch
 stop_conditions:
   - requirements unclear
   - tests failing

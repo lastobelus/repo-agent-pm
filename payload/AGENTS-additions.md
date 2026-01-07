@@ -20,7 +20,7 @@ This kit is currently optimized for **new Phoenix/Elixir/Ash projects**.
 0. **Adding Todos (clean-context)**: Run `./scripts/run-prompt add-todo`.
 1. **Picking a Todo (clean-context)**: Run `./scripts/run-prompt implement-one-todo`.
 2. **Finishing a Task (clean-context)**: Run `./scripts/run-prompt land`.
-3. **Processing Feedback (clean-context)**: Run `./scripts/run-prompt process`.
+3. **Processing Feedback (clean-context)**: Run `./scripts/run-prompt process-todos`.
 4. **Starting a Topic (clean-context)**: Use `./scripts/start-topic -t docs/process/topics/NNN-<slug>`.
 5. **Continuing a Topic (clean-context)**: Use `./scripts/continue-topic -t docs/process/topics/NNN-<slug>`.
 

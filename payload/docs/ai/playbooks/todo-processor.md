@@ -2,6 +2,8 @@
 kind: playbook
 mode: in-session
 name: todo-processor
+depends_on:
+  - playbook/prepare-slot-for-work
 writes:
   - docs/process/TODO.md
 stop_conditions:
@@ -35,6 +37,10 @@ Do not touch items under `Approved`, `Future / Icebox`, or `Finished` unless the
 Treat each “todo group” as a parent checklist line plus its nested checklist children.
 
 ## Procedure
+
+### 0) Preflight
+
+Complete `prepare-slot-for-work` first. If already done, continue.
 
 ### 1) Inventory todo groups
 

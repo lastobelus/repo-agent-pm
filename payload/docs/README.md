@@ -12,7 +12,7 @@ This folder is the human-facing documentation installed with the kit.
 
 - **I want to add work quickly** → `docs/process/TODO.md` + `docs/ai/prompts/add-todo.md`
 - **I need an agent to implement a task** → `docs/ai/prompts/implement-one-todo.md` + `docs/ai/playbooks/todo-implementer.md`
-- **I need to triage the queue** → `docs/ai/prompts/process.md` + `docs/ai/playbooks/todo-processor.md`
+- **I need to triage the queue** → `docs/ai/prompts/process-todos.md` + `docs/ai/playbooks/todo-processor.md`
 - **I want to close out work** → `docs/ai/prompts/land.md` + `docs/ai/playbooks/finish-and-land.md`
 - **This task needs multiple sessions** → `docs/process/topics/README.md`
 - **We just installed the kit** → `docs/process/agent-workflows.md` (examples) + `docs/ai/playbooks/installer.md` (optional)

@@ -156,6 +156,106 @@ yaml_list_task() {
   ' "$file" 2>/dev/null || true
 }
 
+resolve_dep() {
+  local ref="$1"
+  local resolved=""
+
+  case "$ref" in
+    playbook/*)
+      resolved="$ROOT_DIR/docs/ai/playbooks/${ref#playbook/}.md"
+      ;;
+    prompt/*)
+      resolved="$ROOT_DIR/docs/ai/prompts/${ref#prompt/}.md"
+      ;;
+    instruction/*)
+      resolved="$ROOT_DIR/docs/ai/instructions/${ref#instruction/}.md"
+      ;;
+    instructions/*)
+      resolved="$ROOT_DIR/docs/ai/instructions/${ref#instructions/}.md"
+      ;;
+    /*)
+      resolved="$ref"
+      ;;
+    *.md|*/*)
+      resolved="$ROOT_DIR/$ref"
+      ;;
+    *)
+      if [ -f "$ROOT_DIR/docs/ai/prompts/$ref.md" ]; then
+        resolved="$ROOT_DIR/docs/ai/prompts/$ref.md"
+      elif [ -f "$ROOT_DIR/docs/ai/playbooks/$ref.md" ]; then
+        resolved="$ROOT_DIR/docs/ai/playbooks/$ref.md"
+      elif [ -f "$ROOT_DIR/docs/ai/instructions/$ref.md" ]; then
+        resolved="$ROOT_DIR/docs/ai/instructions/$ref.md"
+      fi
+      ;;
+  esac
+
+  printf "%s" "$resolved"
+}
+
+SEEN=""
+VISITING=""
+ORDER=()
+
+list_has() {
+  local list="$1"
+  local needle="$2"
+  printf '%s\n' "$list" | grep -Fxq "$needle"
+}
+
+list_add_unique() {
+  local list="$1"
+  local item="$2"
+  if list_has "$list" "$item"; then
+    printf '%s' "$list"
+  else
+    printf '%s%s\n' "$list" "$item"
+  fi
+}
+
+list_remove_item() {
+  local list="$1"
+  local item="$2"
+  local new_list=""
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    [ "$line" = "$item" ] && continue
+    new_list="${new_list}${line}\n"
+  done <<EOF
+${list}
+EOF
+  printf '%s' "$new_list"
+}
+
+resolve_file() {
+  local file="$1"
+
+  if list_has "$SEEN" "$file"; then
+    return 0
+  fi
+  if list_has "$VISITING" "$file"; then
+    echo "Error: dependency cycle detected at $file" >&2
+    exit 1
+  fi
+
+  VISITING="$(list_add_unique "$VISITING" "$file")"
+  while IFS= read -r dep; do
+    [ -z "$dep" ] && continue
+    dep_file=$(resolve_dep "$dep")
+    if [ -z "$dep_file" ] || [ ! -f "$dep_file" ]; then
+      echo "Warning: dependency '$dep' not found." >&2
+      continue
+    fi
+    resolve_file "$dep_file"
+  done <<< "$(frontmatter_list "$file" depends_on)"
+
+  VISITING="$(list_remove_item "$VISITING" "$file")"
+  SEEN="$(list_add_unique "$SEEN" "$file")"
+  ORDER+=("$file")
+}
+
+resolve_file "$TASK_FILE"
+
 ALL_INPUTS=""
 
 if [ "$INCLUDE_AGENTS" = "1" ]; then
@@ -167,11 +267,19 @@ if [ "$INCLUDE_AGENTS" = "1" ]; then
   fi
 fi
 
-# Always print the selected prompt/playbook/procedure.
-ALL_INPUTS="$ALL_INPUTS$TASK_FILE_REF\n"
+# Include dependencies first, then the selected task file.
+for f in "${ORDER[@]}"; do
+  f_ref="$f"
+  if [[ "$f" == "$ROOT_DIR/"* ]]; then
+    f_ref="${f#$ROOT_DIR/}"
+  fi
+  ALL_INPUTS="$ALL_INPUTS$f_ref\n"
+done
 
-# Baseline inputs declared in the prompt/playbook frontmatter.
-ALL_INPUTS="$ALL_INPUTS$(frontmatter_list "$TASK_FILE" inputs)\n"
+# Baseline inputs declared in the prompt/playbook frontmatter (including dependencies).
+for f in "${ORDER[@]}"; do
+  ALL_INPUTS="$ALL_INPUTS$(frontmatter_list "$f" inputs)\n"
+done
 
 # Project-level additions.
 ALL_INPUTS="$ALL_INPUTS$(yaml_list_top "$CONFIG" instructions)\n"

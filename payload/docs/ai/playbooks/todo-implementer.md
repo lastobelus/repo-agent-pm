@@ -2,6 +2,8 @@
 kind: playbook
 mode: in-session
 name: todo-implementer
+depends_on:
+  - playbook/prepare-slot-for-work
 inputs: []
 writes: []
 stop_conditions:
@@ -23,21 +25,7 @@ This playbook is optimized for new Phoenix/Elixir projects.
 ## Protocol
 ### 0) Preflight (do not skip)
 
-1. Ensure a clean working tree:
-
-```bash
-git status --porcelain
-```
-
-If anything is dirty, stop and ask the human how to proceed.
-
-2. Sync trunk:
-
-```bash
-git fetch origin
-git checkout main
-git pull --ff-only origin main
-```
+Complete `prepare-slot-for-work` first. If already done, continue.
 
 ### 1) Select exactly one todo
 
@@ -47,8 +35,8 @@ git pull --ff-only origin main
 
 ### 2) Branch
 
-- Create a branch named `topic/<task-slug>`.
-- The slug should be short, kebab-case, and specific.
+If you are on `main` or `stable`, create a new `todo/<task-slug>` branch.
+If you are already on a non-trunk branch, do not create a new branch.
 
 ### 3) Record base SHA + mark the selected todo group (recommended)
 

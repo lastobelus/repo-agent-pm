@@ -28,12 +28,13 @@ Common names:
 - `add-todo` (clean-context add todos + origin tags)
 - `implement-one-todo` (clean-context todo implementer)
 - `land` (clean-context closer)
-- `process` (clean-context triage)
+- `process-todos` (clean-context triage)
 - `process-improver` (clean-context process iteration)
 - `setup-local-exchange` (clean-context Local Exchange setup)
 - `start-topic` (clean-context long-lived topic starter)
 - `continue-topic` (clean-context long-lived topic continuation)
 
 Prompt/playbook inputs primarily come from YAML frontmatter in `docs/ai/prompts/` and `docs/ai/playbooks/`.
+Use `depends_on:` in frontmatter to include other prompts/playbooks/instructions in a clean, ordered way.
 
 `scripts/context.config.yaml` is only for **project-specific extra inputs** (and starts empty in a fresh install).
